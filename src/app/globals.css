@@ -1,0 +1,412 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@source inline("text-2xl text-3xl text-4xl text-5xl text-6xl text-7xl text-8xl text-9xl");
+
+/* Both `.dark` and `.dim` count as dark modes so every `dark:` utility fires under either. */
+@custom-variant dark (&:is(.dark *, .dim *));
+/* Dim-only variant, for tweaks that only apply to the dim palette. */
+@custom-variant dim (&:is(.dim *));
+
+@theme inline {
+  --color-background: var(--background);
+  /* Type system: sans = Inter (reading: tables, forms, money in lists); pixel = Pixelify Sans
+     (nav, buttons, section headings, labels); display = Press Start 2P (page titles only, it's wide);
+     stat = VT323 (balances and stat figures). */
+  --font-sans: var(--font-inter);
+  --font-pixel: var(--font-pixelify);
+  --font-display: var(--font-press-start);
+  --font-stat: var(--font-vt323);
+  --color-outline: var(--outline);
+  --color-frame: var(--frame);
+  --color-highlight: var(--highlight);
+  --color-highlight-foreground: var(--highlight-foreground);
+  --color-hp-ok: var(--hp-ok);
+  --color-hp-mid: var(--hp-mid);
+  --color-hp-low: var(--hp-low);
+  --color-hp-track: var(--hp-track);
+  --color-income: var(--income);
+  --color-expense: var(--expense);
+  --color-warning: var(--warning);
+  --color-foreground: var(--foreground);
+  --font-mono: var(--font-geist-mono);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  /* Pixel UI: hard shadows only (no blur), so every shadow-* utility reads as a pixel drop shadow. */
+  --shadow-2xs: 1px 1px 0 0 var(--pixel-shadow);
+  --shadow-xs: 2px 2px 0 0 var(--pixel-shadow);
+  --shadow-sm: 2px 2px 0 0 var(--pixel-shadow);
+  --shadow-md: 3px 3px 0 0 var(--pixel-shadow);
+  --shadow-lg: 4px 4px 0 0 var(--pixel-shadow);
+  --shadow-xl: 6px 6px 0 0 var(--pixel-shadow);
+  --shadow-2xl: 8px 8px 0 0 var(--pixel-shadow);
+  /* Pixel UI: square corners everywhere. */
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+  --radius-2xl: 0px;
+  --radius-3xl: 0px;
+  --radius-4xl: 0px;
+}
+
+/*
+ * Poofsy design tokens: a retro handheld-RPG look (original palette, inspired by GBA-era menus).
+ * Day = cream paper with a muted-blue menu frame; Night = navy; Dusk (the "dim" theme) = evening blue.
+ * Every pixel component reads these, so a theme switch restyles the whole app at once.
+ *   --outline       hard 1-colour outline around panels, buttons and inputs
+ *   --frame         inner band of a menu/dialogue box (the classic double border)
+ *   --pixel-shadow  the single hard drop shadow (no blur, ever)
+ *   --highlight     menu cursor + selection (sun yellow)
+ *   --hp-*          status-bar fills: plenty / getting low / over
+ */
+:root {
+  --radius: 0px;
+  --background: #f6efd9;
+  --foreground: #26282f;
+  --card: #fffcf0;
+  --card-foreground: #26282f;
+  --popover: #fffcf0;
+  --popover-foreground: #26282f;
+  /* Forest green: primary actions, active states, links. */
+  --primary: #2e7d3a;
+  --primary-foreground: #fffcf0;
+  /* Muted blue: secondary surfaces and the menu frame family. */
+  --secondary: #dde7f3;
+  --secondary-foreground: #23365a;
+  --muted: #ece3c8;
+  --muted-foreground: #5c5647;
+  --accent: #f6e7a6;
+  --accent-foreground: #26282f;
+  --destructive: #b3261e;
+  /* Dividers and table rules; boxes, inputs and buttons use the dark --outline instead. */
+  --border: #cbbf98;
+  --input: #26282f;
+  --ring: #f2c230;
+  --outline: #26282f;
+  --frame: #7a9cc6;
+  --pixel-shadow: #26282f;
+  --highlight: #f2c230;
+  --highlight-foreground: #26282f;
+  --paper-dot: rgb(38 40 47 / 0.07);
+  --hp-ok: #3fae4f;
+  --hp-mid: #e8b51c;
+  --hp-low: #d6402f;
+  --hp-track: #3a3f4b;
+  /* Money semantics: income in, expense out, warning for limits. Never used as decoration. */
+  --income: #1f7a34;
+  --expense: #b3261e;
+  --warning: #8a5300;
+  /* Categorical chart slots, in this fixed order (never cycled). Validated with the dataviz
+     skill's validator on these surfaces: slots 1–3 pass every all-pairs CVD and normal-vision
+     check. Light slot 3 is below 3:1, so charts using it carry a legend plus direct labels. */
+  --chart-1: #2a78d6;
+  --chart-2: #eb6834;
+  --chart-3: #1baf7a;
+  --chart-4: #eda100;
+  --chart-5: #e87ba4;
+  --sidebar: #fffcf0;
+  --sidebar-foreground: #26282f;
+  --sidebar-primary: #2e7d3a;
+  --sidebar-primary-foreground: #fffcf0;
+  --sidebar-accent: #f6e7a6;
+  --sidebar-accent-foreground: #26282f;
+  --sidebar-border: #26282f;
+  --sidebar-ring: #f2c230;
+}
+
+.dark,
+.dim {
+  --background: #161a2a;
+  --foreground: #f3ebd3;
+  --card: #232943;
+  --card-foreground: #f3ebd3;
+  --popover: #232943;
+  --popover-foreground: #f3ebd3;
+  --primary: #6cc779;
+  --primary-foreground: #121624;
+  --secondary: #2f3a5c;
+  --secondary-foreground: #e4ecf8;
+  --muted: #2c3250;
+  --muted-foreground: #bdb6a0;
+  --accent: #4a4120;
+  --accent-foreground: #f3ebd3;
+  --destructive: #ff8a7a;
+  --border: #3a4266;
+  --input: #8a93b5;
+  --ring: #f2c230;
+  --outline: #0b0d16;
+  --frame: #4c64a0;
+  --pixel-shadow: #05060c;
+  --highlight: #f2c230;
+  --highlight-foreground: #1a1a1a;
+  --paper-dot: rgb(243 235 211 / 0.05);
+  --hp-ok: #4cc35d;
+  --hp-mid: #f0c22e;
+  --hp-low: #ef5a47;
+  --hp-track: #0b0d16;
+  --income: #7bd88a;
+  --expense: #ff8a7a;
+  --warning: #f2c94c;
+  --chart-1: #3987e5;
+  --chart-2: #d95926;
+  --chart-3: #199e70;
+  --chart-4: #c98500;
+  --chart-5: #d55181;
+  --sidebar: #1c2136;
+  --sidebar-foreground: #f3ebd3;
+  --sidebar-primary: #6cc779;
+  --sidebar-primary-foreground: #121624;
+  --sidebar-accent: #3a3418;
+  --sidebar-accent-foreground: #f3ebd3;
+  --sidebar-border: #0b0d16;
+  --sidebar-ring: #f2c230;
+}
+
+/* Dusk: the "dim" theme. Inherits Night via the shared selector; only surfaces change. */
+.dim {
+  --background: #2a3352;
+  --card: #34406a;
+  --popover: #34406a;
+  --secondary: #3e4b7a;
+  --muted: #3a4570;
+  --muted-foreground: #cfc8b2;
+  --sidebar: #303b62;
+  --frame: #6f86c0;
+  --border: #4d5a8a;
+  /* Lighter red so expenses clear 4.5:1 on Dusk panels (5.2:1). Chart marks sit under 3:1 here,
+     which the dataviz relief rule covers: every chart has a legend, direct labels and a table view. */
+  --expense: #ffa395;
+  --destructive: #ffa395;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    /* Faint pixel-dot paper, like a handheld screen. */
+    background-image: radial-gradient(var(--paper-dot) 1px, transparent 1px);
+    background-size: 8px 8px;
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  html {
+    @apply font-sans;
+    scroll-behavior: smooth;
+  }
+
+  @media (max-width: 767px) {
+    html {
+      scrollbar-width: none;
+    }
+    html::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
+  /* Page titles in the 8-bit display face. It's wide, so title sizes are a step smaller than usual. */
+  h1 {
+    font-family: var(--font-press-start);
+    line-height: 1.4;
+    letter-spacing: 0;
+  }
+
+  /* Section headings, labels and menus in the pixel face; body copy and money stay readable. */
+  h2,
+  h3,
+  h4,
+  [data-slot="card-title"],
+  [data-slot="dialog-title"],
+  [data-slot="sheet-title"],
+  [data-slot="alert-dialog-title"],
+  [data-slot="label"],
+  [data-slot="field-label"],
+  [data-slot="sidebar-group-label"],
+  [data-slot="badge"] {
+    font-family: var(--font-pixelify);
+    letter-spacing: 0.01em;
+  }
+
+  /* Sprites and pixel icons scale without blurring. */
+  .pixelated,
+  svg[data-pixel] {
+    image-rendering: pixelated;
+    shape-rendering: crispEdges;
+  }
+
+  button:not([disabled]),
+  [role="button"]:not([disabled]) {
+    cursor: pointer;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+
+@layer components {
+  /* The one page frame: width + centering. All frame padding lives on the
+     app shell in (private)/(app)/layout.tsx so it resolves once, for both
+     breakpoints. Pages add their own space-y-* rhythm. */
+  .page-container {
+    @apply w-full max-w-400 mx-auto;
+  }
+
+  /*
+   * The menu/dialogue box: hard outline, an inner frame band, one hard drop shadow. No blur, no radius.
+   * Use .pixel-panel for content boxes and dialogs; .pixel-box for small things (rows, chips, inputs).
+   */
+  .pixel-panel {
+    background-color: var(--card);
+    color: var(--card-foreground);
+    border: 3px solid var(--outline);
+    box-shadow:
+      inset 0 0 0 2px var(--card),
+      inset 0 0 0 5px var(--frame),
+      4px 4px 0 0 var(--pixel-shadow);
+  }
+
+  .pixel-box {
+    border: 2px solid var(--outline);
+    box-shadow: 3px 3px 0 0 var(--pixel-shadow);
+  }
+
+  /* A pressable pixel surface: drops onto its shadow when pressed. */
+  .pixel-press {
+    box-shadow: 0 3px 0 0 var(--pixel-shadow);
+    transition:
+      transform 60ms steps(1),
+      box-shadow 60ms steps(1);
+  }
+  .pixel-press:active:not(:disabled) {
+    transform: translateY(3px);
+    box-shadow: 0 0 0 0 var(--pixel-shadow);
+  }
+
+  /* Menu cursor: a pixel triangle that blinks on the selected item, like a handheld RPG menu. */
+  .menu-cursor {
+    position: relative;
+  }
+  .menu-cursor::before {
+    content: "";
+    position: absolute;
+    left: 2px;
+    top: 50%;
+    width: 7px;
+    height: 10px;
+    margin-top: -5px;
+    background: var(--outline);
+    clip-path: polygon(0 0, 100% 50%, 0 100%);
+    opacity: 0;
+  }
+  .menu-cursor[data-active="true"]::before,
+  .menu-cursor:hover::before,
+  .menu-cursor:focus-visible::before {
+    opacity: 1;
+  }
+  .menu-cursor[data-active="true"]::before {
+    animation: cursor-blink 1s steps(1) infinite;
+  }
+
+  /* HP-style status bar: dark track, outlined, chunky fill. */
+  .hp-track {
+    background-color: var(--hp-track);
+    border: 2px solid var(--outline);
+    padding: 1px;
+  }
+
+  .font-pixel {
+    font-family: var(--font-pixelify);
+  }
+
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* Stepped motion only: pixel UIs snap rather than glide. */
+@keyframes cursor-blink {
+  0%,
+  60% {
+    opacity: 1;
+  }
+  61%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* The "poof": a puff that pops, grows and fades in four frames. */
+@keyframes poof {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.4);
+  }
+  25% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  60% {
+    opacity: 1;
+    transform: translate(-50%, -60%) scale(1.25);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -75%) scale(1.5);
+  }
+}
+
+@keyframes coin-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-24px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu-cursor[data-active="true"]::before {
+    animation: none;
+  }
+}

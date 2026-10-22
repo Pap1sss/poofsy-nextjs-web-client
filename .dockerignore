@@ -1,0 +1,11 @@
+node_modules
+.next
+.git
+
+# .env is the deployment config: `next build` reads it inside the image, so it
+# MUST NOT be ignored here (the Dockerfile fails the build if it is missing).
+# The *.local files are per-developer overrides and must stay out — Next loads
+# .env.local BEFORE .env, so letting one in would silently override the
+# deployed values with someone's localhost setup.
+.env.local
+.env.*.local

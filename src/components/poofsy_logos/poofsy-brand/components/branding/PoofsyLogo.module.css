@@ -1,0 +1,55 @@
+.link {
+  display: inline-flex;
+  border-radius: 4px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.link:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 4px;
+}
+
+.root {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5em;
+  max-width: 100%;
+}
+
+.image {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  /* The SVG is pixel art: keep edges hard if a browser rasterizes it. */
+  image-rendering: pixelated;
+}
+
+/* Scale tagline type with the logo so it stays in proportion. */
+.tagline,
+.taglineBanner {
+  font-size: clamp(0.75rem, calc(var(--poofsy-logo-w) * 0.045), 1.125rem);
+  line-height: 1.3;
+  text-align: center;
+  box-sizing: border-box;
+  max-width: calc(var(--poofsy-logo-w) - 8px);
+}
+
+.tagline {
+  color: inherit;
+  opacity: 0.8;
+}
+
+/* Echoes the dialog box from the original logo artwork. */
+.taglineBanner {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color: #112160;
+  background: #faf0e6;
+  padding: 0.4em 0.9em;
+  border: 2px solid #112160;
+  box-shadow:
+    0 0 0 2px #faf0e6,
+    0 0 0 4px #112160;
+  margin: 4px;
+}

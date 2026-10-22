@@ -1,0 +1,45 @@
+.fullScreen,
+.inline {
+  display: grid;
+  place-items: center;
+}
+
+.fullScreen {
+  min-height: 100dvh;
+}
+
+.inline {
+  min-height: 12rem;
+}
+
+/* Stepped motion keeps the pixel-art feel instead of a smooth float. */
+.bob {
+  animation: poofsy-bob 1.2s steps(2, jump-none) infinite alternate;
+}
+
+@keyframes poofsy-bob {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bob {
+    animation: none;
+  }
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
