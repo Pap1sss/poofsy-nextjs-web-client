@@ -22,6 +22,7 @@ import {
   GoalsList,
   RecentTransactions,
   UpcomingBills,
+  YourAccounts,
 } from "./dashboard-sections";
 import { InsightsList } from "./insights-list";
 import { SpendingChart } from "./spending-chart";
@@ -93,18 +94,25 @@ export function BudgetDashboard({ greeting }: { greeting: string }) {
         <DashboardSkeleton />
       ) : (
         <>
-          <div className="space-y-4">
-            {/* The headline is what you have right now; the cards below track the chosen range. */}
-            <TotalMoney netWorth={data.net_worth} accounts={data.accounts} />
-
+          {/* The headline is what you have right now; the cards under it track the chosen range. */}
+          <TotalMoney
+            netWorth={data.net_worth}
+            accounts={data.accounts}
+            aside={
+              <RecentTransactions
+                transactions={data.recent_transactions}
+                onAdd={() => setAdding(true)}
+              />
+            }
+          >
             <section aria-labelledby="money-in-out" className="space-y-3">
-              <h2 id="money-in-out" className="flex flex-wrap items-baseline gap-x-2 text-lg">
+              <h3 id="money-in-out" className="flex flex-wrap items-baseline gap-x-2 text-lg">
                 Money in and out
                 {rangeLabel && (
                   <span className="text-muted-foreground font-sans text-sm">{rangeLabel}</span>
                 )}
-              </h2>
-              <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+              </h3>
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-2">
                 <StatCard
                   sprite="coin"
                   label="Earned"
@@ -139,22 +147,19 @@ export function BudgetDashboard({ greeting }: { greeting: string }) {
                 />
               </div>
             </section>
-          </div>
+          </TotalMoney>
 
           {isNew && <GetStarted />}
 
           <div className="grid gap-6 lg:grid-cols-3">
             <div className="space-y-6 lg:col-span-2">
+              <YourAccounts accounts={data.accounts} />
               {data.range.pay_period && <BudgetBlock budget={data.budget} />}
               {/* Rendered only once data exists; a range change keeps the previous figures until the new ones arrive. */}
               <SpendingChart
                 rows={data.spending_by_category}
                 total={data.spent}
                 range={data.range}
-              />
-              <RecentTransactions
-                transactions={data.recent_transactions}
-                onAdd={() => setAdding(true)}
               />
             </div>
             <div className="space-y-6">

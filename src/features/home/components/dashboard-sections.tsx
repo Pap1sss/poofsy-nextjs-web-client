@@ -8,6 +8,7 @@ import { CategoryBadge } from "@/components/shared/category-badge";
 import { EmptyState } from "@/components/shared/empty-state";
 import { MoneyDisplay } from "@/components/shared/money-display";
 import { routes } from "@/config/routes";
+import { ACCOUNT_TYPE_LABELS, type AccountType } from "@/features/account/schema";
 import { useUserSettings } from "@/features/auth/hooks/useUserSettings";
 import { StatusBadge } from "@/features/budget/components/budget-planner";
 import { WarningsPanel } from "@/features/budget/components/warnings-panel";
@@ -251,7 +252,13 @@ const TYPE_SPRITE: Record<string, SpriteName> = {
   adjustment: "alert",
 };
 
-/** The "bag": recent transactions as an inventory list, one sprite per kind of movement. */
+/** Phones list fewer transactions in the top card, so this range's figures stay on the first screen. */
+const RECENT_ON_PHONES = 3;
+
+/**
+ * The "bag": recent transactions as an inventory list, one sprite per kind of movement. It sits inside
+ * the Total money card, so it has a heading but no frame of its own.
+ */
 export function RecentTransactions({
   transactions,
   onAdd,
@@ -262,29 +269,30 @@ export function RecentTransactions({
   const { locale } = useUserSettings();
 
   return (
-    <Section
-      id="dashboard-recent"
-      title="Recent transactions"
-      sprite="bag"
-      action={
-        <Link href={routes.transactions} className={linkClass}>
-          All transactions
-        </Link>
-      }
-    >
+    <section aria-labelledby="dashboard-recent">
+      <h3
+        id="dashboard-recent"
+        className="font-pixel text-muted-foreground flex items-center gap-2 text-sm"
+      >
+        <Sprite name="bag" size={16} />
+        Recent transactions
+      </h3>
       {transactions.length === 0 ? (
-        <div className="text-muted-foreground space-y-2 text-sm">
+        <div className="text-muted-foreground mt-2 space-y-2 text-sm">
           <p>Your bag is empty. Nothing recorded yet.</p>
           <button type="button" onClick={onAdd} className={cn(linkClass, "min-h-11")}>
             Add your first transaction
           </button>
         </div>
       ) : (
-        <ul className="divide-border divide-y-2 divide-dashed">
-          {transactions.map((t) => (
+        <ul className="divide-border mt-1 divide-y-2 divide-dashed">
+          {transactions.map((t, index) => (
             <li
               key={t.id}
-              className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"
+              className={cn(
+                "flex items-center justify-between gap-3 py-2",
+                index >= RECENT_ON_PHONES && "hidden lg:flex"
+              )}
             >
               <div className="flex min-w-0 items-center gap-3">
                 <span className="bg-muted border-outline flex size-9 shrink-0 items-center justify-center border-2">
@@ -299,6 +307,53 @@ export function RecentTransactions({
                 </div>
               </div>
               <TransactionAmount transaction={t} className="shrink-0 text-sm font-semibold" />
+            </li>
+          ))}
+        </ul>
+      )}
+      {transactions.length > 0 && (
+        <Link href={routes.transactions} className={linkClass}>
+          All transactions
+        </Link>
+      )}
+    </section>
+  );
+}
+
+/** Each account's balance right now; it doesn't follow the date range. */
+export function YourAccounts({ accounts }: { accounts: Dashboard["accounts"] }) {
+  return (
+    <Section
+      id="dashboard-accounts"
+      title="Your accounts"
+      sprite="wallet"
+      action={
+        <Link href={routes.accounts} className={linkClass}>
+          Manage accounts
+        </Link>
+      }
+    >
+      {accounts.length === 0 ? (
+        <p className="text-muted-foreground text-sm">
+          No accounts yet.{" "}
+          <Link href={routes.accounts} className={linkClass}>
+            Add your first account
+          </Link>
+        </p>
+      ) : (
+        <ul className="grid gap-x-8 sm:grid-cols-2">
+          {accounts.map((account) => (
+            <li
+              key={account.id}
+              className="border-border flex items-center justify-between gap-3 border-b-2 border-dashed py-2"
+            >
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium">{account.name}</p>
+                <p className="text-muted-foreground text-xs">
+                  {ACCOUNT_TYPE_LABELS[account.type as AccountType] ?? account.type}
+                </p>
+              </div>
+              <MoneyDisplay value={account.balance} className="font-stat shrink-0 text-2xl" />
             </li>
           ))}
         </ul>
