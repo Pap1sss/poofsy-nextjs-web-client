@@ -36,6 +36,8 @@ export const transactionSchema = z.object({
   pay_period_id: z.string().nullable(),
   bill_occurrence_id: z.string().nullable(),
   from_income_record: z.boolean(),
+  // A debt payment or a debt's opening movement; edited on the Debts page.
+  from_debt: z.boolean(),
   attachments_count: z.number(),
   created_at: z.string().nullable(),
 });

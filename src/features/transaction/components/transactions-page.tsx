@@ -106,12 +106,20 @@ type RowActionsProps = {
   onDelete: (t: Transaction) => void;
 };
 
-/** Income from a payslip is edited on the Income page, where its record lives. */
+/** Income from a payslip is edited on the Income page, and debt money on the Debts page, where their records live. */
 function RowActions({ transaction, onEdit, onDelete }: RowActionsProps) {
   if (transaction.from_income_record) {
     return (
       <Button asChild variant="link" size="sm" className="h-auto px-0">
         <Link href={routes.income.home}>Edit on Income page</Link>
+      </Button>
+    );
+  }
+
+  if (transaction.from_debt) {
+    return (
+      <Button asChild variant="link" size="sm" className="h-auto px-0">
+        <Link href={routes.debts.home}>Edit on Debts page</Link>
       </Button>
     );
   }
