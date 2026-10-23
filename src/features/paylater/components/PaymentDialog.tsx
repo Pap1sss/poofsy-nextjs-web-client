@@ -72,6 +72,7 @@ export function PaymentDialog({ target, payment, onOpenChange }: PaymentDialogPr
       open={open}
       onOpenChange={onOpenChange}
       title={payment ? "Correct a payment" : target ? `Pay: ${target.label}` : ""}
+      size="xl"
     >
       {open && (
         <PaymentBody
