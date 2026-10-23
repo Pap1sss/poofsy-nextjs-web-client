@@ -5,6 +5,7 @@ import "./globals.css";
 
 import AppProvider from "@/components/providers";
 import EnvBadge from "@/components/EnvBadge";
+import { PullToRefresh } from "@/components/pull-to-refresh";
 import { config } from "@/config";
 import { siteUrl } from "@/config/site";
 
@@ -117,6 +118,7 @@ export default function RootLayout({
       <body className="antialiased">
         <NextTopLoader color="var(--primary)" height={2} showSpinner={false} shadow={false} />
         <AppProvider>{children}</AppProvider>
+        <PullToRefresh />
         <EnvBadge />
       </body>
     </html>
