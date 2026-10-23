@@ -39,7 +39,7 @@ import {
   type PurchaseFormValues,
 } from "../schema";
 import { AccountForm } from "./AccountForm";
-import { providerLabel } from "./paylater-bits";
+import { ordinal, providerLabel } from "./paylater-bits";
 import { ScheduleEditor } from "./ScheduleEditor";
 
 const DETAIL_FIELDS = [
@@ -93,6 +93,7 @@ export function PurchaseForm({ open, onOpenChange, purchase, accountId }: Purcha
       open={open}
       onOpenChange={onOpenChange}
       title={purchase ? "Edit purchase" : "Record a PayLater purchase"}
+      size="xl"
     >
       {open &&
         (purchase ? (
@@ -260,62 +261,70 @@ function CreateBody({ accountId, onDone }: { accountId?: string; onDone: () => v
                 </Field>
               )}
             />
-            <Controller
-              name="first_due_date"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid} className="max-w-60">
-                  <FieldLabel htmlFor="purchase-first-due">First due date</FieldLabel>
-                  <Input
-                    {...field}
-                    id="purchase-first-due"
-                    type="date"
-                    aria-invalid={fieldState.invalid}
-                  />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Controller
+                name="first_due_date"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="purchase-first-due">First due date</FieldLabel>
+                    <Input
+                      {...field}
+                      id="purchase-first-due"
+                      type="date"
+                      aria-invalid={fieldState.invalid}
+                    />
+                    {fieldState.invalid ? (
+                      <FieldError errors={[fieldState.error]} />
+                    ) : (
+                      <FieldDescription>
+                        {dueDay
+                          ? `The account's pay date: every ${ordinal(dueDay)}.`
+                          : "When the first installment is due."}
+                      </FieldDescription>
+                    )}
+                  </Field>
+                )}
+              />
+              <Controller
+                name="total_repayment"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="purchase-total">Total to repay</FieldLabel>
+                    <CurrencyInput
+                      id="purchase-total"
+                      value={field.value}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      placeholder="0.00"
+                      aria-invalid={fieldState.invalid}
+                    />
+                    {fieldState.invalid ? (
+                      <FieldError errors={[fieldState.error]} />
+                    ) : (
+                      <FieldDescription>Fees and interest included.</FieldDescription>
+                    )}
+                  </Field>
+                )}
+              />
+            </div>
             <Button
               type="button"
               variant="outline"
+              className="w-full"
               onClick={fillSchedule}
               disabled={preview.isPending}
             >
               {preview.isPending ? "Filling..." : "Fill the schedule"}
             </Button>
 
-            <Controller
-              name="total_repayment"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="purchase-total">Total to repay</FieldLabel>
-                  <CurrencyInput
-                    id="purchase-total"
-                    value={field.value}
-                    onChange={field.onChange}
-                    onBlur={field.onBlur}
-                    placeholder="0.00"
-                    aria-invalid={fieldState.invalid}
-                  />
-                  {fieldState.invalid ? (
-                    <FieldError errors={[fieldState.error]} />
-                  ) : (
-                    <FieldDescription>
-                      From your provider&apos;s statement: what you&apos;ll pay in total, fees and
-                      interest included. The installments must add up to it.
-                    </FieldDescription>
-                  )}
-                </Field>
-              )}
-            />
-
             {installments.length > 0 ? (
               <ScheduleEditor />
             ) : (
               <p className="text-muted-foreground text-sm">
-                Fill the schedule, then change any date or amount to match your statement.
+                Fill the schedule, then change any date or amount to match your provider&apos;s
+                statement. The installments must add up to the total to repay.
               </p>
             )}
             {installments.length === 0 && form.formState.errors.installments?.message && (
@@ -576,10 +585,13 @@ function DetailsFields() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        {amountField("down_payment", "Down payment", "If any.")}
-        {amountField("fees", "Service and processing fees")}
+        {amountField("down_payment", "Down payment")}
+        {amountField("fees", "Fees")}
         {amountField("other_charges", "Other charges")}
       </div>
+      <FieldDescription className="-mt-3">
+        Fees are the provider&apos;s service and processing fees. Leave any of these empty if none.
+      </FieldDescription>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Controller

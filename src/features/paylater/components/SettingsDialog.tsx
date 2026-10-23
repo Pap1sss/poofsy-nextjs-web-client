@@ -92,7 +92,7 @@ function SettingsBody({ prefs, onDone }: { prefs: PaylaterPrefs; onDone: () => v
             name="reminder_days_before"
             control={form.control}
             render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid} className="max-w-40">
+              <Field data-invalid={fieldState.invalid}>
                 <FieldLabel htmlFor="prefs-days">Days before</FieldLabel>
                 <Input
                   {...field}
@@ -140,10 +140,8 @@ function SettingsBody({ prefs, onDone }: { prefs: PaylaterPrefs; onDone: () => v
           name="budget_percent"
           control={form.control}
           render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid} className="max-w-60">
-              <FieldLabel htmlFor="prefs-percent">
-                Warn in the budget planner past this % of a cutoff&apos;s income
-              </FieldLabel>
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor="prefs-percent">Budget planner warning (% of income)</FieldLabel>
               <Input
                 {...field}
                 id="prefs-percent"
@@ -154,7 +152,14 @@ function SettingsBody({ prefs, onDone }: { prefs: PaylaterPrefs; onDone: () => v
                 placeholder="Off"
                 aria-invalid={fieldState.invalid}
               />
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              {fieldState.invalid ? (
+                <FieldError errors={[fieldState.error]} />
+              ) : (
+                <FieldDescription>
+                  Warns when a cutoff&apos;s PayLater passes this share of its income. Leave empty
+                  to turn it off.
+                </FieldDescription>
+              )}
             </Field>
           )}
         />
