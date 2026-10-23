@@ -5,6 +5,8 @@ const apiUrl = new URL(apiBase);
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // Lets the dev server accept /_next/* requests (HMR) through a Cloudflare quick tunnel.
+  allowedDevOrigins: ["*.trycloudflare.com"],
   // Same-origin proxy to the Laravel API, so Sanctum's session cookie works without CORS.
   async rewrites() {
     return [

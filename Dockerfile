@@ -1,9 +1,9 @@
-FROM node:20-alpine AS deps
+FROM node:22-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 WORKDIR /app
 
 COPY --from=deps /app/node_modules ./node_modules
@@ -19,14 +19,19 @@ COPY . .
 # key from the file when it is absent from process.env, and an unset build arg
 # arrives as an empty string, which counts as present. Declaring them here would
 # silently inline "" and still exit 0.
-RUN test -f .env || { \
-      echo "ERROR: .env is missing. Copy .env.example to .env and fill it in."; \
+#
+# ENV_FILE picks another env file from the context to use as .env (docker-compose.yml
+# passes .env.docker, so a developer's localhost .env doesn't end up in the image).
+ARG ENV_FILE=.env
+RUN test -f "$ENV_FILE" || { \
+      echo "ERROR: $ENV_FILE is missing. Copy .env.example to .env and fill it in."; \
       exit 1; \
     }
+RUN if [ "$ENV_FILE" != ".env" ]; then cp "$ENV_FILE" .env; fi
 
 RUN npm run build
 
-FROM node:20-alpine AS runner
+FROM node:22-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
