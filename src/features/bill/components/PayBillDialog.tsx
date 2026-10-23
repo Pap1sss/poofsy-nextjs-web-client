@@ -18,6 +18,7 @@ import { useUserSettings } from "@/features/auth/hooks/useUserSettings";
 import { TRACK_ONLY } from "@/features/transaction/schema";
 import { useFormatMoney } from "@/components/shared/money-display";
 import { applyApiErrors } from "@/lib/utils/form";
+import { generateUuid } from "@/lib/utils/string";
 
 import { useBillAccounts, usePayBill, usePaymentMethods } from "../hooks";
 import { PayFormSchema, type BillOccurrence, type PayFormValues } from "../schema";
@@ -60,7 +61,7 @@ function PayBody({ occurrence, onDone }: { occurrence: BillOccurrence; onDone: (
   const accounts = useBillAccounts();
   const methods = usePaymentMethods();
   // One key per opening of this dialog: a retry after a timeout replays instead of paying twice.
-  const [idempotencyKey] = useState(() => crypto.randomUUID());
+  const [idempotencyKey] = useState(generateUuid);
   const bill = occurrence.bill!;
 
   const form = useForm<PayFormValues>({

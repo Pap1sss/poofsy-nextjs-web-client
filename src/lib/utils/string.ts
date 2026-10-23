@@ -59,6 +59,20 @@ export const generatePassword = (
 };
 
 /**
+ * Generates a random UUID v4. Unlike crypto.randomUUID(), crypto.getRandomValues() also works
+ * on plain-http pages (e.g. the app opened over ZeroTier), not only on https or localhost.
+ * @returns A UUID string such as "3f2a9c1e-5b7d-4e8a-9c0f-1a2b3c4d5e6f"
+ */
+export const generateUuid = (): string => {
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+};
+
+/**
  * Generates a random alphanumeric ID
  * @returns A random string of 13 alphanumeric characters
  */

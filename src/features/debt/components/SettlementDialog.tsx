@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useUserSettings } from "@/features/auth/hooks/useUserSettings";
 import { applyApiErrors } from "@/lib/utils/form";
+import { generateUuid } from "@/lib/utils/string";
 
 import {
   useCorrectSettlement,
@@ -142,7 +143,7 @@ function SettlementBody({
   const categories = useSpendingCategories();
   const paymentMethods = usePaymentMethods();
   // One key per opened form: a double-tap or retry can never record the same payment twice.
-  const [idempotencyKey] = useState(() => crypto.randomUUID());
+  const [idempotencyKey] = useState(generateUuid);
 
   const receivable = debt.direction === "receivable";
   const pending = settle.isPending || correct.isPending;
