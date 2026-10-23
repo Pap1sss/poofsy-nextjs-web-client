@@ -67,7 +67,7 @@ describe("PurchaseForm", () => {
 
     await user.type(await screen.findByLabelText("What did you buy?"), "Rice cooker");
     await user.type(screen.getByLabelText("Purchase amount"), "3000");
-    await user.type(screen.getByLabelText("Service and processing fees"), "150");
+    await user.type(screen.getByLabelText("Fees"), "150");
     await user.type(screen.getByLabelText("First due date"), "2026-11-05");
     await user.click(screen.getByRole("button", { name: "Fill the schedule" }));
 
