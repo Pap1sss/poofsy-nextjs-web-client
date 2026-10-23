@@ -124,6 +124,14 @@ function RowActions({ transaction, onEdit, onDelete }: RowActionsProps) {
     );
   }
 
+  if (transaction.from_paylater) {
+    return (
+      <Button asChild variant="link" size="sm" className="h-auto px-0">
+        <Link href={routes.paylater.home}>Edit on PayLater page</Link>
+      </Button>
+    );
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>

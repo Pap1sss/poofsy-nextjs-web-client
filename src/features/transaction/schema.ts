@@ -38,6 +38,8 @@ export const transactionSchema = z.object({
   from_income_record: z.boolean(),
   // A debt payment or a debt's opening movement; edited on the Debts page.
   from_debt: z.boolean(),
+  // A PayLater payment's expense or a purchase's down payment; edited on the PayLater page.
+  from_paylater: z.boolean(),
   attachments_count: z.number(),
   created_at: z.string().nullable(),
 });
