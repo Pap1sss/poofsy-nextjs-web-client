@@ -41,7 +41,7 @@ export function AccountForm({ open, onOpenChange, account, onSaved }: AccountFor
       open={open}
       onOpenChange={onOpenChange}
       title={account ? "Edit PayLater account" : "Add a PayLater account"}
-      size="md"
+      size="lg"
     >
       {open && (
         <AccountFormBody
@@ -195,7 +195,7 @@ function AccountFormBody({
           name="due_day"
           control={form.control}
           render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid} className="max-w-60">
+            <Field data-invalid={fieldState.invalid}>
               <FieldLabel htmlFor="paylater-due-day">Pay date (optional)</FieldLabel>
               <Input
                 {...field}
