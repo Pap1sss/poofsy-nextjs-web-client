@@ -31,6 +31,10 @@ const SEGMENT_MAP: Record<string, { label: string; href: string }> = {
   profile: { label: "Profile", href: routes.profile },
   // /debts/people has no page of its own; people are listed on the Debts page.
   people: { label: "People", href: routes.debts.home },
+  // /paylater/purchases and /paylater/providers have no pages of their own; both live on the PayLater page.
+  paylater: { label: "PayLater", href: routes.paylater.home },
+  purchases: { label: "Purchases", href: routes.paylater.home },
+  providers: { label: "Providers", href: routes.paylater.home },
   "roles-and-permissions": {
     label: "Roles & Permissions",
     href: routes.roles_and_permissions.list,
