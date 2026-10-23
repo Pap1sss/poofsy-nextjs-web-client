@@ -26,7 +26,7 @@ This is the web client for **Poofsy** ("Money comes, money goes… poof!"), a mu
 **Budgeting pages:**
 - **Overview:** dashboard.
 - **Money:** accounts, transactions, income (records and sources).
-- **Planning:** budgets and the budget planner, budget templates, bills, savings goals, debts (with a page per person).
+- **Planning:** budgets and the budget planner, budget templates, bills, savings goals, debts (with a page per person), PayLater (purchases, installment schedules, a page per provider account).
 - **Insight:** calendar, reports.
 - **Lists:** categories.
 - **Settings:** general settings, pay schedule, payment methods, deduction types.
@@ -75,7 +75,7 @@ src/app/
     (app)/             # shell: sidebar, breadcrumbs, notifications, theme toggle
       dashboard/       # money status, cutoff summary, insights
       accounts/  transactions/  income/ (sources/)  budgets/[id]  budget-templates/[id]
-      bills/  savings-goals/  debts/ ([id], people/[id])  calendar/  reports/  categories/
+      bills/  savings-goals/  debts/ ([id], people/[id])  paylater/ (purchases/[id], providers/[id])  calendar/  reports/  categories/
       settings/ (pay-schedule/ payment-methods/ deduction-types/)
       profile/  notifications/
       users/  roles-and-permissions/  system-activities/   # admin surfaces, gated by PermissionGate
