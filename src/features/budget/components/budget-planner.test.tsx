@@ -124,6 +124,7 @@ const summary = {
   unbudgeted: [
     { category: { id: "c-gifts", name: "Gifts", color: null }, actual: money("300.00") },
   ],
+  paylater: { scheduled: money("0.00"), count: 0 },
   warnings: [
     {
       type: "over_allocated_actual",

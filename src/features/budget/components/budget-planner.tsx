@@ -105,6 +105,25 @@ function Planner({ budget, title }: { budget: BudgetSummary; title?: string }) {
 
       <WarningsPanel warnings={budget.warnings} />
 
+      {/* Planned, not spent: it only counts as spending once it's paid. */}
+      {budget.paylater.count > 0 && (
+        <p className="pixel-box bg-card flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 text-sm">
+          <Sprite name="card" size={18} />
+          <span>
+            <MoneyDisplay value={budget.paylater.scheduled} className="font-medium" /> of PayLater
+            is due this cutoff ({budget.paylater.count}{" "}
+            {budget.paylater.count === 1 ? "installment" : "installments"}). Leave room for it; it
+            counts as spending once you pay it.
+          </span>
+          <Link
+            href={routes.paylater.home}
+            className="font-pixel text-primary underline decoration-2 underline-offset-4"
+          >
+            Open PayLater
+          </Link>
+        </p>
+      )}
+
       {!editable && (
         <p className="pixel-box bg-card flex w-fit items-center gap-3 px-4 py-2 text-sm">
           <Sprite name="check" size={18} />

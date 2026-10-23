@@ -84,5 +84,14 @@ function WarningText({ warning }: { warning: BudgetWarning }) {
           {warning.category} has used {Math.round(warning.utilization)}% of its budget.
         </p>
       );
+    case "paylater_heavy":
+      return (
+        <p>
+          <MoneyDisplay value={warning.amount} tone="expense" className="font-medium" /> of PayLater
+          is due this cutoff, more than your {warning.percent}% limit (
+          <MoneyDisplay value={warning.limit} tone="neutral" />
+          ).
+        </p>
+      );
   }
 }

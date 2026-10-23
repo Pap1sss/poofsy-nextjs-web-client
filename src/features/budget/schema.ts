@@ -76,6 +76,13 @@ export const warningSchema = z.discriminatedUnion("type", [
     amount_over: moneySchema,
   }),
   z.object({ type: z.literal("approaching_limit"), category: z.string(), utilization: z.number() }),
+  // PayLater due in this cutoff passes the share of income set on the PayLater page.
+  z.object({
+    type: z.literal("paylater_heavy"),
+    amount: moneySchema,
+    percent: z.number(),
+    limit: moneySchema,
+  }),
 ]);
 
 // Matches BudgetService::summary(). Every figure is computed by the API.
@@ -116,6 +123,8 @@ export const budgetSummarySchema = z.object({
       actual: moneySchema,
     })
   ),
+  // PayLater still to pay in this cutoff: a planned obligation, not spending until it's paid.
+  paylater: z.object({ scheduled: moneySchema, count: z.number() }),
   warnings: z.array(warningSchema),
 });
 
