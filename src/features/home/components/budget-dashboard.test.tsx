@@ -102,13 +102,17 @@ describe("BudgetDashboard for a brand-new user", () => {
       auth: onboardedAuth(),
     });
 
-    // The headline is total money across accounts, with each account listed.
+    // The headline is total money across accounts, with recent transactions beside it.
     const hero = await screen.findByRole("region", { name: "Total money" });
     expect(hero).toHaveTextContent("₱0.00");
-    expect(within(hero).getByText("Cash on hand")).toBeInTheDocument();
     expect(
       within(hero).getByText("Across 1 account. Savings goals are part of these balances.")
     ).toBeInTheDocument();
+    expect(within(hero).getByText("Your bag is empty. Nothing recorded yet.")).toBeInTheDocument();
+
+    // Each account is listed in its own card further down.
+    const accounts = screen.getByRole("region", { name: "Your accounts" });
+    expect(within(accounts).getByText("Cash on hand")).toBeInTheDocument();
 
     // The range's flow sits below: earned, spent, saved and what's left.
     const flow = within(screen.getByRole("region", { name: /Money in and out/ }));
