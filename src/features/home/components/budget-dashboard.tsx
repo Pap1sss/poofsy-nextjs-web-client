@@ -20,6 +20,7 @@ import {
   BudgetBlock,
   GetStarted,
   GoalsList,
+  Obligations,
   RecentTransactions,
   UpcomingBills,
   YourAccounts,
@@ -163,6 +164,7 @@ export function BudgetDashboard({ greeting }: { greeting: string }) {
               />
             </div>
             <div className="space-y-6">
+              <Obligations obligations={data.obligations} />
               <InsightsList />
               <UpcomingBills bills={data.upcoming_bills} />
               <GoalsList goals={data.goals} />

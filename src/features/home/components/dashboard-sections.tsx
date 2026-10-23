@@ -13,6 +13,7 @@ import { useUserSettings } from "@/features/auth/hooks/useUserSettings";
 import { StatusBadge } from "@/features/budget/components/budget-planner";
 import { WarningsPanel } from "@/features/budget/components/warnings-panel";
 import { TransactionAmount } from "@/features/transaction";
+import { isZero } from "@/lib/money";
 import { cn } from "@/lib/utils/component";
 
 import { daysFromToday, shortDate } from "../dates";
@@ -317,6 +318,65 @@ export function RecentTransactions({
         </Link>
       )}
     </section>
+  );
+}
+
+/**
+ * What you owe and are owed, in two separate lines: PayLater plans and personal debts are never
+ * added together, so each keeps its own meaning. Hidden when neither module is used.
+ */
+export function Obligations({ obligations }: { obligations: Dashboard["obligations"] }) {
+  const { locale } = useUserSettings();
+  const { paylater, debts } = obligations;
+  if (!paylater && !debts) return null;
+
+  return (
+    <Section id="dashboard-obligations" title="What you owe" sprite="scroll">
+      <div className="space-y-4">
+        {paylater && (
+          <Link href={routes.paylater.home} className="hover:bg-accent -mx-2 block px-2 py-1">
+            <p className="font-pixel text-muted-foreground text-xs">PayLater</p>
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="text-sm">Still to pay</span>
+              <MoneyDisplay
+                value={paylater.outstanding}
+                tone="expense"
+                className="font-stat text-2xl"
+              />
+            </div>
+            <p className="text-muted-foreground text-xs">
+              Due this month <MoneyDisplay value={paylater.due_this_month} tone="neutral" />
+              {!isZero(paylater.overdue) && (
+                <span className="text-expense">
+                  {" · overdue "}
+                  <MoneyDisplay value={paylater.overdue} tone="expense" />
+                </span>
+              )}
+            </p>
+            {paylater.next_payment && (
+              <p className="text-muted-foreground text-xs">
+                Next: <MoneyDisplay value={paylater.next_payment.remaining} tone="neutral" /> on{" "}
+                {shortDate(paylater.next_payment.due_date, locale)} (
+                {paylater.next_payment.provider.provider_name})
+              </p>
+            )}
+          </Link>
+        )}
+        {debts && (
+          <Link href={routes.debts.home} className="hover:bg-accent -mx-2 block px-2 py-1">
+            <p className="font-pixel text-muted-foreground text-xs">Debts</p>
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="text-sm">I owe</span>
+              <MoneyDisplay value={debts.i_owe} tone="expense" className="font-stat text-2xl" />
+            </div>
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="text-sm">Owed to me</span>
+              <MoneyDisplay value={debts.owed_to_me} tone="income" className="font-stat text-2xl" />
+            </div>
+          </Link>
+        )}
+      </div>
+    </Section>
   );
 }
 

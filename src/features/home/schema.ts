@@ -3,6 +3,7 @@ import { z } from "zod";
 import { moneySchema } from "@/lib/money";
 import { resSchema } from "@/lib/schemas";
 import { allocationSchema, BUDGET_STATUSES, warningSchema } from "@/features/budget/schema";
+import { scheduledInstallmentSchema } from "@/features/paylater/schema";
 import { transactionSchema } from "@/features/transaction/schema";
 
 const ref = z.object({ id: z.string(), name: z.string() });
@@ -86,6 +87,25 @@ export const dashboardSchema = z.object({
   ),
   upcoming_bills: z.array(billOccurrenceSchema),
   goals: z.array(goalSchema),
+  // What's owed, kept apart: PayLater plans and personal debts (null when that module isn't used).
+  obligations: z.object({
+    paylater: z
+      .object({
+        outstanding: moneySchema,
+        due_this_month: moneySchema,
+        overdue: moneySchema,
+        next_payment: scheduledInstallmentSchema.nullable(),
+      })
+      .nullable(),
+    debts: z
+      .object({
+        owed_to_me: moneySchema,
+        i_owe: moneySchema,
+        overdue_receivables: moneySchema,
+        overdue_payables: moneySchema,
+      })
+      .nullable(),
+  }),
   recent_transactions: z.array(transactionSchema),
 });
 

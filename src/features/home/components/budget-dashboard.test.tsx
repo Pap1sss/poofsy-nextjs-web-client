@@ -30,6 +30,7 @@ const emptyDashboard = {
   spending_by_category: [],
   upcoming_bills: [],
   goals: [],
+  obligations: { paylater: null, debts: null },
   recent_transactions: [],
 };
 
