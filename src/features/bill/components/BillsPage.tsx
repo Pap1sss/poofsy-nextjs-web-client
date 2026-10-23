@@ -196,65 +196,100 @@ function OccurrenceList({
     });
 
   return (
-    <ul className={ROW_LIST}>
-      {rows.map((occurrence) => {
-        const isOverdue = occurrence.status === "overdue";
-        const bill = bills.data?.find((b) => b.id === occurrence.bill?.id) ?? null;
-
-        return (
-          <li
-            key={occurrence.id}
-            // Phones: a grid of name + amount, then the due date, then a full-width pay button.
-            // From sm up it is one flex row in DOM order, and the grid placement is ignored.
-            className="hover:bg-accent grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 px-4 py-4 sm:flex sm:flex-wrap sm:gap-x-4 sm:px-5"
+    <div className="space-y-6">
+      {groupByMonth(rows).map(({ month, label, items }) => (
+        <section key={month} aria-labelledby={`bills-${status}-${month}`} className="space-y-2">
+          <h3
+            id={`bills-${status}-${month}`}
+            className="flex items-baseline gap-2 border-b-2 border-dashed pb-1 text-lg"
           >
-            <Sprite name={isOverdue ? "alert" : "house"} size={24} />
-            <div className="col-span-2 col-start-2 row-start-2 flex items-baseline gap-2 sm:block sm:w-28 sm:shrink-0">
-              <p className="font-pixel text-sm">{longDate(occurrence.due_date)}</p>
-              {isOverdue ? (
-                <p className="font-pixel text-expense text-xs">Overdue</p>
-              ) : (
-                <p className="font-pixel text-muted-foreground text-xs">Due</p>
-              )}
-            </div>
-            <div className="col-start-2 row-start-1 min-w-0 sm:flex-1">
-              <p className="font-pixel truncate text-base">{occurrence.bill?.name}</p>
-              <div className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-2 text-sm">
-                {occurrence.bill?.category && (
-                  <CategoryBadge
-                    name={occurrence.bill.category.name}
-                    color={occurrence.bill.category.color}
+            {label}
+            <span className="text-muted-foreground font-sans text-sm">
+              {items.length} {items.length === 1 ? "bill" : "bills"}
+            </span>
+          </h3>
+          <ul className={ROW_LIST}>
+            {items.map((occurrence) => {
+              const isOverdue = occurrence.status === "overdue";
+              const bill = bills.data?.find((b) => b.id === occurrence.bill?.id) ?? null;
+
+              return (
+                <li
+                  key={occurrence.id}
+                  // Phones: a grid of name + amount, then the due date, then a full-width pay button.
+                  // From sm up it is one flex row in DOM order, and the grid placement is ignored.
+                  className="hover:bg-accent grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 px-4 py-4 sm:flex sm:flex-wrap sm:gap-x-4 sm:px-5"
+                >
+                  <Sprite name={isOverdue ? "alert" : "house"} size={24} />
+                  <div className="col-span-2 col-start-2 row-start-2 flex items-baseline gap-2 sm:block sm:w-28 sm:shrink-0">
+                    <p className="font-pixel text-sm">{longDate(occurrence.due_date)}</p>
+                    {isOverdue ? (
+                      <p className="font-pixel text-expense text-xs">Overdue</p>
+                    ) : (
+                      <p className="font-pixel text-muted-foreground text-xs">Due</p>
+                    )}
+                  </div>
+                  <div className="col-start-2 row-start-1 min-w-0 sm:flex-1">
+                    <p className="font-pixel truncate text-base">{occurrence.bill?.name}</p>
+                    <div className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-2 text-sm">
+                      {occurrence.bill?.category && (
+                        <CategoryBadge
+                          name={occurrence.bill.category.name}
+                          color={occurrence.bill.category.color}
+                        />
+                      )}
+                      {occurrence.bill?.account && <span>From {occurrence.bill.account.name}</span>}
+                    </div>
+                  </div>
+                  <MoneyDisplay
+                    value={occurrence.amount}
+                    className="col-start-3 row-start-1 self-start text-lg font-bold sm:self-auto"
                   />
-                )}
-                {occurrence.bill?.account && <span>From {occurrence.bill.account.name}</span>}
-              </div>
-            </div>
-            <MoneyDisplay
-              value={occurrence.amount}
-              className="col-start-3 row-start-1 self-start text-lg font-bold sm:self-auto"
-            />
-            <div className="col-span-2 col-start-2 row-start-3 flex items-center gap-1">
-              <Button
-                size="sm"
-                className="min-h-11 flex-1 sm:min-h-9 sm:flex-none"
-                onClick={() => onPay(occurrence)}
-              >
-                Mark as paid
-              </Button>
-              <RowActionsMenu
-                label={`More actions for ${occurrence.bill?.name}`}
-                actions={[
-                  { label: "Skip this time", onSelect: () => onSkip(occurrence) },
-                  ...(bill ? [{ label: "Edit bill", onSelect: () => onEditBill(bill) }] : []),
-                ]}
-              />
-            </div>
-          </li>
-        );
-      })}
-    </ul>
+                  <div className="col-span-2 col-start-2 row-start-3 flex items-center gap-1">
+                    <Button
+                      size="sm"
+                      className="min-h-11 flex-1 sm:min-h-9 sm:flex-none"
+                      onClick={() => onPay(occurrence)}
+                    >
+                      Mark as paid
+                    </Button>
+                    <RowActionsMenu
+                      label={`More actions for ${occurrence.bill?.name}`}
+                      actions={[
+                        { label: "Skip this time", onSelect: () => onSkip(occurrence) },
+                        ...(bill ? [{ label: "Edit bill", onSelect: () => onEditBill(bill) }] : []),
+                      ]}
+                    />
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      ))}
+    </div>
   );
 }
+
+/** Splits due-date-ordered occurrences into one run per calendar month, keeping their order. */
+function groupByMonth(rows: BillOccurrence[]) {
+  const groups: { month: string; label: string; items: BillOccurrence[] }[] = [];
+  for (const occurrence of rows) {
+    const month = occurrence.due_date.slice(0, 7);
+    const last = groups.at(-1);
+    if (last?.month === month) {
+      last.items.push(occurrence);
+    } else {
+      groups.push({ month, label: monthLabel(month), items: [occurrence] });
+    }
+  }
+  return groups;
+}
+
+const monthLabel = (month: string) =>
+  new Intl.DateTimeFormat(undefined, { month: "long", year: "numeric", timeZone: "UTC" }).format(
+    new Date(`${month}-01T00:00:00Z`)
+  );
 
 function PaidList() {
   const paid = useOccurrences("paid");
