@@ -27,7 +27,8 @@ export function CurrencyInput({ value, onChange, currency, onBlur, ...props }: C
   const minorUnits = code === settings.currency ? settings.minorUnits : 2;
 
   return (
-    <InputGroup>
+    // The same pixel box as Input (h-10, 2px border, inset shadow), so money fields line up beside others.
+    <InputGroup className="bg-card dark:bg-card h-10 rounded-none border-2 shadow-[inset_2px_2px_0_0_var(--muted)]">
       <InputGroupAddon>
         <InputGroupText>{currencySymbol(code, settings.locale)}</InputGroupText>
       </InputGroupAddon>
@@ -36,7 +37,7 @@ export function CurrencyInput({ value, onChange, currency, onBlur, ...props }: C
         type="text"
         inputMode="decimal"
         autoComplete="off"
-        className="tabular-nums"
+        className="h-full tabular-nums"
         value={value}
         onChange={(event) => onChange(parseAmountInput(event.target.value, minorUnits))}
         onBlur={(event) => {
