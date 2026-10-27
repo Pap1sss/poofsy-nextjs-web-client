@@ -18,14 +18,91 @@ import { authQueryKey } from "@/features/auth/api/useAuthenticatedUser";
 import { apiUrl } from "@/lib/utils/api-url";
 import { routes } from "@/config/routes";
 
+/** Every figure that moves when money does. */
+const MONEY = [
+  "transactions",
+  "accounts",
+  "budgets",
+  "dashboard",
+  "insights",
+  "calendar",
+  "reports",
+];
+/** The per-feature picker caches (accounts, categories, payment methods). */
+const LOOKUPS = [
+  "bill-lookups",
+  "debt-lookups",
+  "income-lookups",
+  "paylater-lookups",
+  "savings-goal-lookups",
+];
+const PAYLATER = ["paylater", "dashboard", "budgets", "calendar", "insights"];
+const DEBTS = ["debts", "debt-people"];
+
 /**
  * Which caches a `user-data-updated` signal invalidates. Keys match the
  * backend's `broadcastSignalType()` (the kebab-cased model name); add an entry
- * when a new owner-scoped model starts broadcasting.
+ * when a new owner-scoped model starts broadcasting. Only queries on screen
+ * refetch, so erring wide is cheap.
  */
 const INVALIDATIONS: Record<string, string[]> = {
   auth: [authQueryKey],
   user: [userQueryKey],
+
+  transaction: [
+    ...MONEY,
+    "bills",
+    "bill-occurrences",
+    "incomes",
+    "savings-goals",
+    ...DEBTS,
+    "paylater",
+  ],
+  attachment: ["transactions"],
+  reconciliation: ["accounts", "transactions", "dashboard"],
+  account: ["accounts", "dashboard", "budgets", "savings-goals", ...LOOKUPS],
+  category: [
+    "categories",
+    "budgets",
+    "budget-templates",
+    "transactions",
+    "bills",
+    "reports",
+    ...LOOKUPS,
+  ],
+  "payment-method": ["payment-methods", ...LOOKUPS],
+  "deduction-type": ["deduction-types", "income-lookups"],
+  "income-source": ["income-sources", "incomes"],
+  "income-record": ["incomes", ...MONEY],
+  "income-record-deduction": ["incomes"],
+  "pay-schedule": [
+    "pay-schedules",
+    "budgets",
+    "dashboard",
+    "calendar",
+    "incomes",
+    "income-lookups",
+  ],
+  "pay-period": ["budgets", "dashboard", "calendar", "incomes", "income-lookups"],
+  budget: ["budgets", "dashboard", "insights", "reports"],
+  "budget-allocation": ["budgets", "dashboard", "insights", "reports"],
+  "budget-template": ["budget-templates"],
+  "budget-template-item": ["budget-templates"],
+  bill: ["bills", "bill-occurrences", "dashboard", "calendar", "insights"],
+  "bill-occurrence": ["bills", "bill-occurrences", "dashboard", "calendar", "insights"],
+  "savings-goal": ["savings-goals", "dashboard", "insights"],
+  "savings-contribution": ["savings-goals", "dashboard", "insights"],
+  person: DEBTS,
+  debt: [...DEBTS, "dashboard"],
+  "debt-settlement": [...DEBTS, "dashboard"],
+  "debt-event": DEBTS,
+  "paylater-account": PAYLATER,
+  "paylater-purchase": PAYLATER,
+  "paylater-installment": PAYLATER,
+  "paylater-payment": PAYLATER,
+  "paylater-allocation": PAYLATER,
+  "paylater-event": ["paylater"],
+  "user-setting": ["settings", authQueryKey, "dashboard", "budgets", "insights"],
 };
 
 /** Admin lists, keyed by the type the server signalled on an `admin.*` channel. */
@@ -114,9 +191,9 @@ const SocketListeners: React.FC = () => {
   useEcho(
     `users.${authUser?.id}`,
     ".user-data-updated",
-    (payload: { type?: string }) => {
-      const keys = payload?.type ? INVALIDATIONS[payload.type] : undefined;
-      if (!keys) return;
+    (payload: { types?: string[] }) => {
+      // One signal covers a whole request, so the same key can come from several types.
+      const keys = new Set((payload?.types ?? []).flatMap((type) => INVALIDATIONS[type] ?? []));
 
       for (const key of keys) {
         queryClient.invalidateQueries({ queryKey: [key] });
