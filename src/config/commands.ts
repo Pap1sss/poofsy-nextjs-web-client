@@ -38,6 +38,7 @@ const pageOverrides: PageOverride[] = [
   { href: routes.dashboard.home, label: "Home", keywords: ["dashboard"] },
   { href: routes.profile, label: "Profile", icon: UserRound, keywords: ["account", "password"] },
   { href: routes.notifications.list, label: "Notifications", icon: Bell, keywords: ["inbox"] },
+  { href: routes.help, keywords: ["help", "guide", "manual", "faq", "how to", "tutorial"] },
   {
     href: routes.system_activities.list,
     label: "System Activities",

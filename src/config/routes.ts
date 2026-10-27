@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   ArrowLeftRight,
   Banknote,
+  BookOpen,
   CalendarClock,
   CalendarDays,
   CalendarRange,
@@ -32,6 +33,7 @@ export const NAV_GROUP = z.enum([
   "Dashboard",
   "Budget",
   "Setup",
+  "Help",
   "Modules",
   "Management",
   "Administration",
@@ -103,6 +105,7 @@ export const routes = {
   },
   reports: "/reports",
   calendar: "/calendar",
+  help: "/help",
   settings: {
     home: "/settings",
     pay_schedule: "/settings/pay-schedule",
@@ -282,6 +285,15 @@ export const navigation: NavItem[] = [
     permissions: [],
     requiresOnboarding: true,
     group: "Setup",
+  },
+  {
+    title: "How It Works",
+    url: routes.help,
+    icon: BookOpen,
+    description: "The built-in guide to every page and figure.",
+    permissions: [],
+    requiresOnboarding: true,
+    group: "Help",
   },
   {
     title: "Users",
