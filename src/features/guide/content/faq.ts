@@ -116,7 +116,7 @@ export const faq: GuideTopic = {
       blocks: [
         {
           type: "p",
-          text: 'Yes. Your data lives on the server, and pages open on your other tabs and devices refresh by themselves when something changes. Per-browser preferences (Hide amounts, Animations, the form style and your "understood" marks in this guide) are the exception.',
+          text: 'Yes. Your data lives on the server, and pages open on your other tabs and devices refresh by themselves when something changes. Per-browser preferences (the Hide total and Hide balances eyes, Animations, the form style and your "understood" marks in this guide) are the exception.',
         },
       ],
     },

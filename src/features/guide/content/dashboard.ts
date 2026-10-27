@@ -32,7 +32,7 @@ export const dashboard: GuideTopic = {
         },
         {
           type: "p",
-          text: 'The eye button on this card ("Hide amounts") replaces every amount in the app with ***** until you turn it back on. It is remembered in this browser.',
+          text: 'The eye button on this card ("Hide total") replaces the total with ***** until you turn it back on. Other amounts stay visible. It is remembered in this browser.',
         },
       ],
     },
