@@ -17,7 +17,7 @@ import {
 } from "./schema";
 
 export type BillStatus = "active" | "inactive" | "all";
-export type OccurrenceFilter = "upcoming" | "overdue" | "paid";
+export type OccurrenceFilter = "upcoming" | "overdue" | "paid" | "skipped";
 
 const blankToNull = (value: string) => (value.trim() === "" ? null : value);
 

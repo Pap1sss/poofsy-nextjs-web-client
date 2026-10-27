@@ -28,15 +28,16 @@ import { userPermissions } from "@/features/user/constant";
 import { userApiClient } from "@/features/user/api";
 import { canAccess } from "@/lib/utils/nav";
 
+// Same names as the header toggle and Settings; the old words stay findable as keywords.
 const THEMES = [
-  { value: "light", label: "Light theme", icon: Sun },
-  { value: "dark", label: "Dark theme", icon: Moon },
-  { value: "dim", label: "Dim theme", icon: MoonStar },
-  { value: "system", label: "System theme", icon: Monitor },
+  { value: "light", label: "Day theme", icon: Sun, keywords: ["light"] },
+  { value: "dark", label: "Night theme", icon: Moon, keywords: ["dark"] },
+  { value: "dim", label: "Dusk theme", icon: MoonStar, keywords: ["dim"] },
+  { value: "system", label: "Match my device", icon: Monitor, keywords: ["system", "theme"] },
 ];
 
 // Every typed word must appear in the label or keywords. cmdk's default fuzzy
-// scoring matches scattered letters ("adm" -> "Dark theme"), which reads as noise.
+// scoring matches scattered letters ("adm" -> an unrelated theme), which reads as noise.
 const filterCommands = (value: string, search: string, keywords?: string[]) => {
   const haystack = [value, ...(keywords ?? [])].join(" ").toLowerCase();
   const words = search.toLowerCase().split(/\s+/).filter(Boolean);
@@ -190,7 +191,7 @@ export function CommandMenu() {
                 <CommandItem
                   key={theme.value}
                   value={theme.label}
-                  keywords={["appearance", "mode"]}
+                  keywords={["appearance", "mode", ...theme.keywords]}
                   onSelect={() => run(() => setTheme(theme.value))}
                 >
                   <theme.icon />

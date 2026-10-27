@@ -91,6 +91,9 @@ export default function BillsPage() {
           <TabsTrigger value="paid" className={TAB}>
             Paid
           </TabsTrigger>
+          <TabsTrigger value="skipped" className={TAB}>
+            Skipped
+          </TabsTrigger>
           <TabsTrigger value="bills" className={TAB}>
             All bills
           </TabsTrigger>
@@ -114,6 +117,9 @@ export default function BillsPage() {
         </TabsContent>
         <TabsContent value="paid">
           <PaidList />
+        </TabsContent>
+        <TabsContent value="skipped">
+          <SkippedList />
         </TabsContent>
         <TabsContent value="bills">
           <BillList onEdit={openForm} onDelete={setDeleting} onAdd={() => openForm(null)} />
@@ -320,6 +326,56 @@ function PaidList() {
             </p>
           </div>
           <MoneyDisplay value={occurrence.amount} className="font-bold" />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** Due dates you chose to skip; undoing one puts it back under Upcoming or Missed. */
+function SkippedList() {
+  const skipped = useOccurrences("skipped");
+  const unskip = useUnskipOccurrence();
+
+  if (skipped.isError) return <Error message={skipped.error.message} />;
+  if (skipped.isLoading) return <ListSkeleton />;
+  if (!skipped.data?.length) {
+    return (
+      <EmptyState
+        title="Nothing skipped"
+        description="Due dates you skip show up here, so you can undo a skip later."
+      />
+    );
+  }
+
+  return (
+    <ul className={ROW_LIST}>
+      {skipped.data.map((occurrence) => (
+        <li key={occurrence.id} className="flex items-center gap-4 px-4 py-4 sm:px-5">
+          <Sprite name="flag" size={20} />
+          <div className="min-w-0 flex-1">
+            <p className="font-pixel truncate text-base">{occurrence.bill?.name}</p>
+            <p className="text-muted-foreground text-sm">
+              <span className="font-pixel">Skipped</span>
+              {". "}
+              Due {longDate(occurrence.due_date)}
+            </p>
+          </div>
+          <MoneyDisplay value={occurrence.amount} tone="neutral" className="hidden sm:inline" />
+          <Button
+            variant="outline"
+            size="sm"
+            className="min-h-11 sm:min-h-8"
+            disabled={unskip.isPending}
+            onClick={() =>
+              unskip.mutate(occurrence.id, {
+                onSuccess: (res) => toast.success(res.message),
+                onError: (error) => toast.error(error.message),
+              })
+            }
+          >
+            Undo skip
+          </Button>
         </li>
       ))}
     </ul>

@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { routes } from "@/config/routes";
+import { useUserSettings } from "@/features/auth/hooks/useUserSettings";
 import { useAccountOptions, useCategoryOptions } from "@/features/budget/hooks";
 import type { CategoryOption } from "@/features/budget/schema";
 import { useSetBreadcrumbTitle } from "@/lib/hooks/useBreadcrumbTitle";
@@ -60,13 +61,14 @@ const SCOPE_LABEL = {
   second: "2nd cutoff only",
 } as const;
 
-const newRule = (): TemplateFormValues["items"][number] => ({
+/** `rollover` follows Settings → "Roll unused money into the next cutoff by default". */
+const newRule = (rollover: boolean): TemplateFormValues["items"][number] => ({
   category_id: "",
   rule_type: "fixed",
   amount: "",
   percentage: "",
   cutoff_scope: "every",
-  rollover: false,
+  rollover,
   destination_account_id: "",
 });
 
@@ -84,6 +86,7 @@ function Editor({ template }: { template: BudgetTemplate }) {
   const categories = useCategoryOptions();
   const accounts = useAccountOptions();
   const update = useUpdateTemplate();
+  const { settings } = useUserSettings();
 
   const form = useForm<TemplateFormValues>({
     resolver: zodResolver(TemplateFormSchema),
@@ -374,7 +377,11 @@ function Editor({ template }: { template: BudgetTemplate }) {
           })}
         </ol>
 
-        <Button type="button" variant="outline" onClick={() => append(newRule())}>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => append(newRule(settings?.rollover_default ?? false))}
+        >
           <Plus className="size-4" aria-hidden />
           Add rule
         </Button>
