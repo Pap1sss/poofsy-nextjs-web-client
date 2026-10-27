@@ -77,6 +77,7 @@ src/app/
       accounts/  transactions/  income/ (sources/)  budgets/[id]  budget-templates/[id]
       bills/  savings-goals/  debts/ ([id], people/[id])  paylater/ (purchases/[id], providers/[id])  calendar/  reports/  categories/
       settings/ (pay-schedule/ payment-methods/ deduction-types/)
+      help/            # "How It Works" user guide (features/guide; content in features/guide/content/*.ts)
       profile/  notifications/
       users/  roles-and-permissions/  system-activities/   # admin surfaces, gated by PermissionGate
 ```
