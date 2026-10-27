@@ -4,7 +4,7 @@ import { useCallback } from "react";
 
 import { useUserSettings } from "@/features/auth/hooks/useUserSettings";
 import { formatMoney, isNegative, type Money } from "@/lib/money";
-import { HIDDEN_AMOUNT, useAmountsHidden } from "@/lib/privacy";
+import { HIDDEN_AMOUNT } from "@/lib/privacy";
 import { cn } from "@/lib/utils/component";
 
 type MoneyDisplayProps = {
@@ -16,21 +16,23 @@ type MoneyDisplayProps = {
   tone?: "auto" | "income" | "expense" | "neutral";
   /** Show "+" on positives, e.g. for a change or an income row. */
   signed?: boolean;
+  /** Mask the amount, for an area whose privacy switch is on (`useHidden` in lib/privacy). */
+  hidden?: boolean;
   className?: string;
 };
 
 /**
  * Renders an API amount in the user's locale with tabular figures, so columns of money line up.
- * With "Hide amounts" on it shows HIDDEN_AMOUNT instead, uncoloured, so not even the sign leaks.
+ * With `hidden` it shows HIDDEN_AMOUNT instead, uncoloured, so not even the sign leaks.
  */
 export function MoneyDisplay({
   value,
   tone = "auto",
   signed = false,
+  hidden = false,
   className,
 }: MoneyDisplayProps) {
   const { locale } = useUserSettings();
-  const hidden = useAmountsHidden();
   const negative = isNegative(value);
 
   if (hidden) {
@@ -56,14 +58,13 @@ export function MoneyDisplay({
   );
 }
 
-/** formatMoney for plain-text spots (chart labels, sentences, the poof): honours "Hide amounts" too. */
+/** formatMoney for plain-text spots (chart labels, sentences, the poof). */
 export function useFormatMoney() {
   const { locale } = useUserSettings();
-  const hidden = useAmountsHidden();
 
   return useCallback(
     (value: Money, signDisplay?: Intl.NumberFormatOptions["signDisplay"]) =>
-      hidden ? HIDDEN_AMOUNT : formatMoney(value, locale, signDisplay),
-    [hidden, locale]
+      formatMoney(value, locale, signDisplay),
+    [locale]
   );
 }

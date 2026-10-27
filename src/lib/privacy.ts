@@ -1,35 +1,42 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 
 /**
- * "Hide amounts": a per-browser privacy switch (like the Animations preference). While it's on,
- * every displayed amount reads as HIDDEN_AMOUNT. Inputs still show what you type.
+ * Per-browser privacy switches (like the Animations preference), one per area, each toggled by an
+ * eye button there. While an area's switch is on, its amounts read as HIDDEN_AMOUNT:
+ * - `total`: the dashboard's Total money figure.
+ * - `accounts`: the balances on the Accounts page.
+ * Every other amount stays visible.
  */
 export const HIDDEN_AMOUNT = "*****";
 
-const KEY = "poofsy:hide-amounts";
-const CHANGE = "poofsy:hide-amounts-change";
+export type PrivacyArea = "total" | "accounts";
+
+const key = (area: PrivacyArea) => `poofsy:hide-${area}`;
+const CHANGE = "poofsy:hide-change";
 
 // Source of truth for this page; storage only persists it, so the switch still works if storage is blocked.
-let hidden: boolean | null = null;
+const hidden = new Map<PrivacyArea, boolean>();
 
-function read(): boolean {
-  if (hidden === null) {
+function read(area: PrivacyArea): boolean {
+  let value = hidden.get(area);
+  if (value === undefined) {
     try {
-      hidden = window.localStorage.getItem(KEY) === "on";
+      value = window.localStorage.getItem(key(area)) === "on";
     } catch {
-      hidden = false;
+      value = false;
     }
+    hidden.set(area, value);
   }
-  return hidden;
+  return value;
 }
 
 function subscribe(onChange: () => void) {
-  // Another tab flipped it: drop the cached value and re-read.
+  // Another tab flipped one: drop the cached values and re-read.
   const onStorage = (event: StorageEvent) => {
-    if (event.key !== KEY) return;
-    hidden = null;
+    if (!event.key?.startsWith("poofsy:hide-")) return;
+    hidden.clear();
     onChange();
   };
   window.addEventListener(CHANGE, onChange);
@@ -40,18 +47,19 @@ function subscribe(onChange: () => void) {
   };
 }
 
-export function setAmountsHidden(next: boolean) {
-  hidden = next;
+export function setHidden(area: PrivacyArea, next: boolean) {
+  hidden.set(area, next);
   try {
-    if (next) window.localStorage.setItem(KEY, "on");
-    else window.localStorage.removeItem(KEY);
+    if (next) window.localStorage.setItem(key(area), "on");
+    else window.localStorage.removeItem(key(area));
   } catch {
     // Storage blocked: the switch works for this page but won't be remembered.
   }
   window.dispatchEvent(new Event(CHANGE));
 }
 
-/** Whether amounts are hidden. Re-renders every caller when the switch flips (in any tab). */
-export function useAmountsHidden(): boolean {
-  return useSyncExternalStore(subscribe, read, () => false);
+/** Whether an area's amounts are hidden. Re-renders every caller when a switch flips (in any tab). */
+export function useHidden(area: PrivacyArea): boolean {
+  const getSnapshot = useCallback(() => read(area), [area]);
+  return useSyncExternalStore(subscribe, getSnapshot, () => false);
 }

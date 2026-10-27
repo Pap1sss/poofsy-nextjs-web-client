@@ -136,23 +136,26 @@ describe("BudgetDashboard for a brand-new user", () => {
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
-  it("hides every amount behind asterisks, and shows them again", async () => {
+  it("hides only the total behind asterisks, and shows it again", async () => {
     server.use(http.get("*/api/dashboard", () => ok(emptyDashboard)));
     const { user } = renderWithProviders(<BudgetDashboard greeting="Hi" />, {
       auth: onboardedAuth(),
     });
     const hero = await screen.findByRole("region", { name: "Total money" });
 
-    await user.click(screen.getByRole("button", { name: "Hide amounts" }));
-    expect(screen.queryByText(/₱/)).not.toBeInTheDocument();
-    expect(hero).toHaveTextContent("*****");
-    expect(window.localStorage.getItem("poofsy:hide-amounts")).toBe("on");
+    await user.click(screen.getByRole("button", { name: "Hide total" }));
+    expect(
+      within(hero).getByRole("heading", { name: "Total money" }).nextElementSibling
+    ).toHaveTextContent("*****");
+    // Everything else (this range's figures, balances) stays visible.
+    expect(screen.getAllByText(/₱/).length).toBeGreaterThan(0);
+    expect(window.localStorage.getItem("poofsy:hide-total")).toBe("on");
 
-    const show = screen.getByRole("button", { name: "Show amounts" });
+    const show = screen.getByRole("button", { name: "Show total" });
     expect(show).toHaveAttribute("aria-pressed", "true");
     await user.click(show);
     expect(hero).toHaveTextContent("₱0.00");
-    expect(window.localStorage.getItem("poofsy:hide-amounts")).toBeNull();
+    expect(window.localStorage.getItem("poofsy:hide-total")).toBeNull();
   });
 
   it("asks the API for the current cutoff without sending a range", async () => {
