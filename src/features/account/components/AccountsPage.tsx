@@ -8,10 +8,12 @@ import Error from "@/components/Error";
 import { Sprite, type SpriteName } from "@/components/pixel/sprites";
 import { DeleteRecordDialog } from "@/components/shared/delete-record-dialog";
 import { EmptyState } from "@/components/shared/empty-state";
+import { HideAmountsButton } from "@/components/shared/hide-amounts-button";
 import { MoneyDisplay } from "@/components/shared/money-display";
 import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useHidden } from "@/lib/privacy";
 
 import { useAccounts, useArchiveAccount, useDeleteAccount, useRestoreAccount } from "../hooks";
 import { ACCOUNT_TYPE_LABELS, type Account, type AccountType } from "../schema";
@@ -34,6 +36,7 @@ const TYPE_SPRITE: Record<AccountType, SpriteName> = {
 export default function AccountsPage() {
   const [status, setStatus] = useState<ListStatus>("active");
   const accounts = useAccounts(status);
+  const balancesHidden = useHidden("accounts");
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Account | null>(null);
@@ -56,10 +59,13 @@ export default function AccountsPage() {
         sprite="wallet"
         description="Cash, bank accounts and e-wallets. Balances update from every transaction you record."
         actions={
-          <Button onClick={() => openForm(null)}>
-            <Plus className="size-4" aria-hidden />
-            Add account
-          </Button>
+          <>
+            <HideAmountsButton area="accounts" what="balances" className="size-10" />
+            <Button onClick={() => openForm(null)}>
+              <Plus className="size-4" aria-hidden />
+              Add account
+            </Button>
+          </>
         }
       />
 
@@ -101,6 +107,7 @@ export default function AccountsPage() {
               </div>
               <MoneyDisplay
                 value={account.current_balance}
+                hidden={balancesHidden}
                 className="font-stat text-2xl sm:text-3xl"
               />
               <RowActionsMenu

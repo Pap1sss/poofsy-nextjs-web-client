@@ -4,7 +4,7 @@ import { useSyncExternalStore } from "react";
 
 /**
  * Which guide topics the user marked as understood: a per-browser preference
- * (like "Hide amounts" in lib/privacy.ts), so nothing is stored on the server.
+ * (like the privacy switches in lib/privacy.ts), so nothing is stored on the server.
  */
 const KEY = "poofsy:guide-understood";
 const CHANGE = "poofsy:guide-understood-change";

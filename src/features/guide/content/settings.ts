@@ -77,7 +77,7 @@ export const settings: GuideTopic = {
       blocks: [
         {
           type: "p",
-          text: 'The "Animations" switch turns off Poofsy\'s celebration effects. They are off anyway when your device asks for reduced motion. "Hide amounts" (the eye on Home\'s Total money card) masks every amount. Both are remembered per browser, so set them on each device.',
+          text: 'The "Animations" switch turns off Poofsy\'s celebration effects. They are off anyway when your device asks for reduced motion. "Hide total" (the eye on Home\'s Total money card) masks that total, and "Hide balances" (the eye on Accounts & Wallets) masks the balances there. Both are remembered per browser, so set them on each device.',
         },
       ],
     },

@@ -35,7 +35,7 @@ This is the web client for **Poofsy** ("Money comes, money goes… poof!"), a mu
 - Public sign-up is at `/register`.
 - Until the user finishes `/onboarding`, `PrivateRoute` sends them there. Nav and command entries flagged `requiresOnboarding` stay hidden until then.
 
-**The rule for figures:** the client never computes budget figures; it only formats and parses (D5). Money arrives as `{ amount: "12106.59", currency: "PHP" }` strings. Render it with `MoneyDisplay`, and take input with `CurrencyInput`. For plain text (chart labels, sentences, toasts), use `useFormatMoney()` rather than `formatMoney`. Both honour the "Hide amounts" privacy switch (`lib/privacy.ts`, per browser, toggled from the dashboard's Total money card), which shows `*****` in place of every amount.
+**The rule for figures:** the client never computes budget figures; it only formats and parses (D5). Money arrives as `{ amount: "12106.59", currency: "PHP" }` strings. Render it with `MoneyDisplay`, and take input with `CurrencyInput`. For plain text (chart labels, sentences, toasts), use `useFormatMoney()` rather than `formatMoney`. Privacy switches (`lib/privacy.ts`, per browser, one per area, flipped by `HideAmountsButton`) mask amounts as `*****` via `MoneyDisplay`'s `hidden` prop: `total` (the dashboard's Total money figure) and `accounts` (balances on the Accounts page). Other amounts are never hidden.
 
 **From the boilerplate** (the admin pages are the super-admin's back office only, D2):
 - **Auth**: login, logout, sign-up, forgot/reset password.

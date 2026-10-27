@@ -1,10 +1,9 @@
 "use client";
 
-import { Eye, EyeOff } from "lucide-react";
-
 import { PoofsyLogo } from "@/components/branding";
+import { HideAmountsButton } from "@/components/shared/hide-amounts-button";
 import { MoneyDisplay } from "@/components/shared/money-display";
-import { setAmountsHidden, useAmountsHidden } from "@/lib/privacy";
+import { useHidden } from "@/lib/privacy";
 import type { Money } from "@/lib/money";
 
 import type { Dashboard } from "../schema";
@@ -26,28 +25,19 @@ export function TotalMoney({
   /** Shown under the total (the dashboard puts this range's figures here). */
   children?: React.ReactNode;
 }) {
-  const hidden = useAmountsHidden();
+  const hidden = useHidden("total");
 
   return (
     <section
       aria-labelledby="total-money"
       className="pixel-panel relative grid gap-5 p-4 sm:p-5 md:p-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,24rem)] lg:items-center lg:gap-8"
     >
-      {/* Privacy: hides every amount in the app (per browser), e.g. when someone can see your screen. */}
-      <button
-        type="button"
-        onClick={() => setAmountsHidden(!hidden)}
-        aria-pressed={hidden}
-        aria-label={hidden ? "Show amounts" : "Hide amounts"}
-        title={hidden ? "Show amounts" : "Hide amounts"}
-        className="text-muted-foreground hover:text-foreground hover:bg-accent focus-visible:outline-highlight absolute top-2 right-2 z-10 flex size-11 items-center justify-center outline-none focus-visible:outline-3 sm:top-3 sm:right-3"
-      >
-        {hidden ? (
-          <EyeOff className="size-5" aria-hidden />
-        ) : (
-          <Eye className="size-5" aria-hidden />
-        )}
-      </button>
+      {/* Privacy: hides this total (per browser), e.g. when someone can see your screen. */}
+      <HideAmountsButton
+        area="total"
+        what="total"
+        className="absolute top-2 right-2 z-10 sm:top-3 sm:right-3"
+      />
 
       <div className="min-w-0 space-y-5">
         <div className="flex items-center gap-4 pr-10 sm:gap-5 lg:pr-0">
@@ -60,7 +50,7 @@ export function TotalMoney({
               Total money
             </h2>
             <p className="font-stat mt-1 text-5xl leading-none break-words sm:text-6xl md:text-7xl">
-              <MoneyDisplay value={netWorth} />
+              <MoneyDisplay value={netWorth} hidden={hidden} />
             </p>
             <p className="text-muted-foreground mt-2 max-w-prose text-sm">
               Across {accounts.length} {accounts.length === 1 ? "account" : "accounts"}. Savings

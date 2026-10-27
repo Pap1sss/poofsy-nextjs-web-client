@@ -34,7 +34,6 @@ import {
   type TransactionFormValues,
   type TransactionType,
 } from "../schema";
-import { HIDDEN_AMOUNT, useAmountsHidden } from "@/lib/privacy";
 
 import { transactionAmountLabel } from "./transaction-amount";
 import { TransactionReceipts } from "./transaction-receipts";
@@ -144,7 +143,6 @@ export function TransactionForm({
   onSaved,
 }: TransactionFormProps) {
   const { timezone, locale } = useUserSettings();
-  const amountsHidden = useAmountsHidden();
   const editing = !!transaction;
 
   const accounts = useAccountOptions();
@@ -212,7 +210,7 @@ export function TransactionForm({
           toast.success(res.message);
           // Money just moved: a little poof for new entries (not for edits).
           if (!transaction) {
-            poof(amountsHidden ? HIDDEN_AMOUNT : transactionAmountLabel(res.data, locale));
+            poof(transactionAmountLabel(res.data, locale));
           }
           onSaved?.(res.data);
           onOpenChange(false);

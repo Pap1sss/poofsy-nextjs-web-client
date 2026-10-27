@@ -133,6 +133,10 @@ export const gettingStarted: GuideTopic = {
           tone: "tip",
           text: "Start with today's real balances and record from today onward. You don't need to enter your whole history for Poofsy to be useful.",
         },
+        {
+          type: "p",
+          text: 'The eye button at the top of Accounts & Wallets ("Hide balances") replaces every balance on that page with ***** until you turn it back on. It works separately from the eye on Home\'s Total money card, and it is remembered in this browser.',
+        },
       ],
     },
     {

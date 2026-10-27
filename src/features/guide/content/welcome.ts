@@ -80,7 +80,7 @@ export const welcome: GuideTopic = {
         },
         {
           type: "p",
-          text: "Need to use Poofsy in public? The eye button on the Home page's Total money card hides every amount on screen (they show as *****). It's remembered in this browser until you turn it off.",
+          text: "Need to use Poofsy in public? The eye button on the Home page's Total money card hides that total, and the one on Accounts & Wallets hides the balances there (they show as *****). Each is remembered in this browser until you turn it off.",
         },
       ],
     },
