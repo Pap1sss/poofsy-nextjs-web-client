@@ -410,3 +410,19 @@
     animation: none;
   }
 }
+
+/* Paper copies (e.g. the How It Works guide): drop the app chrome and keep boxes whole across pages. */
+@media print {
+  [data-slot="sidebar-gap"],
+  [data-slot="sidebar-container"],
+  [data-print="hide"] {
+    display: none !important;
+  }
+  .pixel-panel,
+  .pixel-box {
+    box-shadow: none;
+  }
+  .pixel-box {
+    break-inside: avoid;
+  }
+}
