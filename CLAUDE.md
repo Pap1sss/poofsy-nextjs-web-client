@@ -144,7 +144,7 @@ Echo uses the Reverb broadcaster, configured in `lib/laravel-echo` from `NEXT_PU
 | Channel | Event | Effect |
 |---|---|---|
 | `users.{id}` | `BroadcastNotificationCreated` | refetch notifications and show a toast (with a download button for exports) |
-| `users.{id}` | `.user-data-updated` `{type}` | invalidate the query keys in `INVALIDATIONS[type]` (`auth`, `user`; add your own models) |
+| `users.{id}` | `.user-data-updated` `{types}` | invalidate the union of `INVALIDATIONS[type]` for each type (one entry per budget model, kebab-cased; add one when a model starts broadcasting). The tab that made the change is skipped (`X-Socket-Id`), so its own mutation hooks still do their invalidation (D29) |
 | `users.{id}` | `.user-session-terminated` `{reason}` | clear the cache, toast the reason (`SESSION_TERMINATED_MESSAGES`) and go to `/login` |
 | `admin.users`, `admin.roles` | `.admin-data-updated` `{type}` | invalidate the admin list caches |
 
