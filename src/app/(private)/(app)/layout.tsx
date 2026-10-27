@@ -17,7 +17,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <AppSidebar />
       <SidebarInset>
         {/* The top strip of the screen: cream panel over a thick outline, like a handheld menu bar. */}
-        <header className="bg-card border-outline sticky top-0 z-10 mb-4 flex h-16 shrink-0 items-center gap-2 border-b-3 group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+        <header
+          data-print="hide"
+          className="bg-card border-outline sticky top-0 z-10 mb-4 flex h-16 shrink-0 items-center gap-2 border-b-3 group-has-data-[collapsible=icon]/sidebar-wrapper:h-12"
+        >
           <div className="flex items-center gap-2 px-4 w-full">
             <SidebarTrigger className="-ml-2 size-11 md:-ml-1 md:size-8" />
             <Breadcrumbs />

@@ -56,6 +56,7 @@ export function MobileTabBar() {
     <>
       <nav
         aria-label="Main"
+        data-print="hide"
         className="bg-card border-outline fixed inset-x-0 bottom-0 z-40 flex border-t-3 pb-[env(safe-area-inset-bottom)] md:hidden"
       >
         {TABS.map(tab)}
