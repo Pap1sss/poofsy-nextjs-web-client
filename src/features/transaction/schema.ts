@@ -40,6 +40,8 @@ export const transactionSchema = z.object({
   from_debt: z.boolean(),
   // A PayLater payment's expense or a purchase's down payment; edited on the PayLater page.
   from_paylater: z.boolean(),
+  // A group expense share, its paid-for-others adjustment, or a group settlement; edited on the Groups page.
+  from_group: z.boolean(),
   attachments_count: z.number(),
   created_at: z.string().nullable(),
 });

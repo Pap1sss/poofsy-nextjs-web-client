@@ -378,14 +378,15 @@ function PaymentBody({
                       options={[]}
                       loadOptions={async (query, signal) => {
                         const res = await paylaterApi.searchExpenses(query, signal);
-                        // Expenses already tied to a bill, income, debt or payment can't be linked again.
+                        // Expenses already tied to a bill, income, debt, payment or group can't be linked again.
                         return res.data.data
                           .filter(
                             (t) =>
                               !t.bill_occurrence_id &&
                               !t.from_income_record &&
                               !t.from_debt &&
-                              !t.from_paylater
+                              !t.from_paylater &&
+                              !t.from_group
                           )
                           .map((t) => ({
                             value: t.id,
