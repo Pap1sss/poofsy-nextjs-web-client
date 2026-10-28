@@ -16,7 +16,13 @@ export class ApiValidationError extends Error {
   }
 }
 
-export type ConflictOption = "archive" | "merge" | "deactivate" | "end_date" | "cancel";
+export type ConflictOption =
+  | "archive"
+  | "merge"
+  | "deactivate"
+  | "end_date"
+  | "cancel"
+  | "complete";
 
 /**
  * A 409: the record is in use, or the action doesn't fit its state (e.g. a completed budget).

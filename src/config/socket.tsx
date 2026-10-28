@@ -32,12 +32,14 @@ const MONEY = [
 const LOOKUPS = [
   "bill-lookups",
   "debt-lookups",
+  "group-lookups",
   "income-lookups",
   "paylater-lookups",
   "savings-goal-lookups",
 ];
 const PAYLATER = ["paylater", "dashboard", "budgets", "calendar", "insights"];
 const DEBTS = ["debts", "debt-people"];
+const GROUPS = ["groups"];
 
 /**
  * Which caches a `user-data-updated` signal invalidates. Keys match the
@@ -57,6 +59,7 @@ const INVALIDATIONS: Record<string, string[]> = {
     "savings-goals",
     ...DEBTS,
     "paylater",
+    ...GROUPS,
   ],
   attachment: ["transactions"],
   reconciliation: ["accounts", "transactions", "dashboard"],
@@ -96,6 +99,10 @@ const INVALIDATIONS: Record<string, string[]> = {
   debt: [...DEBTS, "dashboard"],
   "debt-settlement": [...DEBTS, "dashboard"],
   "debt-event": DEBTS,
+  "expense-group": GROUPS,
+  "group-participant": GROUPS,
+  "group-expense": GROUPS,
+  "group-settlement": GROUPS,
   "paylater-account": PAYLATER,
   "paylater-purchase": PAYLATER,
   "paylater-installment": PAYLATER,

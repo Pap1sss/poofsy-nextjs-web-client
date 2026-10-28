@@ -20,6 +20,7 @@ import {
   ShoppingBag,
   Tags,
   Users,
+  UsersRound,
   Wallet,
   type LucideIcon,
 } from "lucide-react";
@@ -97,6 +98,10 @@ export const routes = {
     home: "/debts",
     detail: (id: string | number) => `/debts/${id}`,
     person: (id: string | number) => `/debts/people/${id}`,
+  },
+  groups: {
+    home: "/groups",
+    detail: (id: string | number) => `/groups/${id}`,
   },
   paylater: {
     home: "/paylater",
@@ -201,6 +206,15 @@ export const navigation: NavItem[] = [
     url: routes.debts.home,
     icon: HandCoins,
     description: "Money owed to you and money you owe.",
+    permissions: [],
+    requiresOnboarding: true,
+    group: "Budget",
+  },
+  {
+    title: "Groups",
+    url: routes.groups.home,
+    icon: UsersRound,
+    description: "Shared expenses split with friends, and who owes whom.",
     permissions: [],
     requiresOnboarding: true,
     group: "Budget",
