@@ -247,6 +247,7 @@ export const expenseOptionsResSchema = resSchema.extend({
         from_income_record: z.boolean(),
         from_debt: z.boolean(),
         from_paylater: z.boolean(),
+        from_group: z.boolean(),
       })
     ),
   }),

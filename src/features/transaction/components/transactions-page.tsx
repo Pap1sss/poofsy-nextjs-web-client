@@ -124,6 +124,14 @@ function RowActions({ transaction, onEdit, onDelete }: RowActionsProps) {
     );
   }
 
+  if (transaction.from_group) {
+    return (
+      <Button asChild variant="link" size="sm" className="h-auto px-0">
+        <Link href={routes.groups.home}>Edit on Groups page</Link>
+      </Button>
+    );
+  }
+
   if (transaction.from_paylater) {
     return (
       <Button asChild variant="link" size="sm" className="h-auto px-0">
