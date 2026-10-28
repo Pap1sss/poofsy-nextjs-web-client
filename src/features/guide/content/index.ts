@@ -6,6 +6,7 @@ import { dashboard } from "./dashboard";
 import { debts } from "./debts";
 import { faq } from "./faq";
 import { gettingStarted } from "./getting-started";
+import { groups } from "./groups";
 import { income } from "./income";
 import { paylater } from "./paylater";
 import { reports } from "./reports";
@@ -30,6 +31,7 @@ export const GUIDE_TOPICS: GuideTopic[] = [
   bills,
   savings,
   debts,
+  groups,
   paylater,
   reports,
   settings,
