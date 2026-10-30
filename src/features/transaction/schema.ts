@@ -44,6 +44,9 @@ export const transactionSchema = z.object({
   from_paylater: z.boolean(),
   // A group expense share, its paid-for-others adjustment, or a group settlement; edited on the Groups page.
   from_group: z.boolean(),
+  // Only in a list filtered by one account: the signed effect on it and its balance right after (D34).
+  account_change: moneySchema.nullable(),
+  balance_after: moneySchema.nullable(),
   attachments_count: z.number(),
   created_at: z.string().nullable(),
 });
