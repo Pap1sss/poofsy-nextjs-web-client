@@ -209,6 +209,27 @@ describe("TransactionForm saving", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("doesn't ask for a category on an expense kept out of the Payday Planner", async () => {
+    let body: Record<string, unknown> | undefined;
+    server.use(
+      http.post("*/api/transactions", async ({ request }) => {
+        body = (await request.json()) as Record<string, unknown>;
+        return ok(transaction({ exclude_from_budget: true, category: null }), "Transaction saved.");
+      })
+    );
+    const { user, onSaved } = open();
+    await waitForPickers();
+
+    await user.type(screen.getByLabelText("Amount"), "300");
+    await user.type(screen.getByLabelText("Description"), "Gift from savings");
+    await user.selectOptions(screen.getByLabelText("Paid from"), "acc-wallet");
+    await user.click(screen.getByLabelText("Don't count in Payday Planner"));
+    await user.click(screen.getByRole("button", { name: "Add transaction" }));
+
+    await waitFor(() => expect(onSaved).toHaveBeenCalled());
+    expect(body).toMatchObject({ type: "expense", category_id: null, exclude_from_budget: true });
+  });
+
   it("keeps an expense out of the Payday Planner, and offers that only for expenses", async () => {
     let body: Record<string, unknown> | undefined;
     server.use(
