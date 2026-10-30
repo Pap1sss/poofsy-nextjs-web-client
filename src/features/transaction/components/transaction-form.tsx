@@ -11,7 +11,15 @@ import { ChoiceCards } from "@/components/shared/choice-cards";
 import { CurrencyInput } from "@/components/shared/currency-input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
 import { FormShell } from "@/components/ui/form-shell";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -89,6 +97,7 @@ const FIELDS = [
   "category_id",
   "payment_method_id",
   "adjustment_direction",
+  "exclude_from_budget",
   "transaction_date",
   "description",
   "notes",
@@ -113,6 +122,7 @@ function initialValues(
       category_id: transaction.category?.id ?? "",
       payment_method_id: transaction.payment_method?.id ?? "",
       adjustment_direction: transaction.adjustment_direction ?? "",
+      exclude_from_budget: transaction.exclude_from_budget,
       transaction_date: transaction.transaction_date,
       description: transaction.description,
       notes: transaction.notes ?? "",
@@ -127,6 +137,7 @@ function initialValues(
     category_id: "",
     payment_method_id: "",
     adjustment_direction: "",
+    exclude_from_budget: false,
     transaction_date: today,
     description: "",
     notes: "",
@@ -416,6 +427,31 @@ export function TransactionForm({
                       </FieldDescription>
                     )
                   )}
+                </Field>
+              )}
+            />
+          )}
+
+          {type === "expense" && (
+            <Controller
+              name="exclude_from_budget"
+              control={form.control}
+              render={({ field }) => (
+                <Field orientation="horizontal">
+                  <Checkbox
+                    id="transaction-exclude-from-budget"
+                    checked={field.value}
+                    onCheckedChange={(v) => field.onChange(v === true)}
+                  />
+                  <FieldContent>
+                    <FieldLabel htmlFor="transaction-exclude-from-budget">
+                      Don&apos;t count in Payday Planner
+                    </FieldLabel>
+                    <FieldDescription>
+                      For money you already had, like savings. It still counts in reports and
+                      lowers the account balance.
+                    </FieldDescription>
+                  </FieldContent>
                 </Field>
               )}
             />
