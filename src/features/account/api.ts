@@ -4,6 +4,7 @@ import { request } from "@/lib/utils/request";
 import {
   accountListResSchema,
   accountResSchema,
+  balanceHistoryResSchema,
   reconcileResSchema,
   signedAmount,
   type AccountFormValues,
@@ -22,6 +23,15 @@ export const accountApi = {
     request({
       config: { method: "GET", url: "accounts", params: { status } },
       schema: accountListResSchema,
+    }),
+
+  get: (id: string) =>
+    request({ config: { method: "GET", url: `accounts/${id}` }, schema: accountResSchema }),
+
+  balanceHistory: (id: string, from: string, to: string) =>
+    request({
+      config: { method: "GET", url: `accounts/${id}/balance-history`, params: { from, to } },
+      schema: balanceHistoryResSchema,
     }),
 
   create: (values: AccountFormValues) =>

@@ -448,8 +448,8 @@ export function TransactionForm({
                       Don&apos;t count in Payday Planner
                     </FieldLabel>
                     <FieldDescription>
-                      For money you already had, like savings. It still counts in reports and
-                      lowers the account balance.
+                      For money you already had, like savings. It still counts in reports and lowers
+                      the account balance.
                     </FieldDescription>
                   </FieldContent>
                 </Field>

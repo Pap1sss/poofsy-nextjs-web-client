@@ -13,6 +13,21 @@ export const useAccounts = (status: ListStatus = "active") =>
     select: (res) => res.data,
   });
 
+// Both keys start with accountQueryKey, so account mutations and new transactions refresh them too.
+export const useAccount = (id: string) =>
+  useQuery({
+    queryKey: [accountQueryKey, "detail", id],
+    queryFn: () => accountApi.get(id),
+    select: (res) => res.data,
+  });
+
+export const useBalanceHistory = (id: string, from: string, to: string) =>
+  useQuery({
+    queryKey: [accountQueryKey, "balance-history", id, from, to],
+    queryFn: () => accountApi.balanceHistory(id, from, to),
+    select: (res) => res.data,
+  });
+
 /** Every account mutation refreshes all account lists (active and archived). */
 const useAccountMutation = <TVars, TRes extends { message: string }>(
   fn: (vars: TVars) => Promise<TRes>

@@ -79,6 +79,8 @@ export const transaction = (overrides: Record<string, unknown> = {}) => ({
   from_debt: false,
   from_paylater: false,
   from_group: false,
+  account_change: null,
+  balance_after: null,
   attachments_count: 0,
   created_at: "2026-10-20T10:00:00+00:00",
   ...overrides,

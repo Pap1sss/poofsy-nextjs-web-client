@@ -87,6 +87,7 @@ export const routes = {
     sources: "/income/sources",
   },
   accounts: "/accounts",
+  account: (id: string | number) => `/accounts/${id}`,
   categories: "/categories",
   budget_templates: {
     home: "/budget-templates",

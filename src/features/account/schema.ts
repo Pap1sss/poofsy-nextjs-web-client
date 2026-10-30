@@ -45,6 +45,12 @@ export const accountSchema = z.object({
 export const accountListResSchema = resSchema.extend({ data: z.array(accountSchema) });
 export const accountResSchema = resSchema.extend({ data: accountSchema });
 
+// Matches AccountService::balanceHistory: the opening balance on `from`, then the end-of-day
+// balance on each day money moved.
+export type BalancePoint = z.infer<typeof balancePointSchema>;
+export const balancePointSchema = z.object({ date: z.string(), balance: moneySchema });
+export const balanceHistoryResSchema = resSchema.extend({ data: z.array(balancePointSchema) });
+
 export const reconcileResSchema = resSchema.extend({
   data: z.object({
     statement_balance: moneySchema,
