@@ -169,6 +169,7 @@ describe("TransactionForm saving", () => {
       category_id: "cat-food",
       payment_method_id: "pm-gcash",
       adjustment_direction: null,
+      exclude_from_budget: false,
       transaction_date: "2026-10-21",
       description: "Groceries",
       notes: null,
@@ -206,6 +207,31 @@ describe("TransactionForm saving", () => {
         name: "None – track only",
       })
     ).not.toBeInTheDocument();
+  });
+
+  it("keeps an expense out of the Payday Planner, and offers that only for expenses", async () => {
+    let body: Record<string, unknown> | undefined;
+    server.use(
+      http.post("*/api/transactions", async ({ request }) => {
+        body = (await request.json()) as Record<string, unknown>;
+        return ok(transaction({ exclude_from_budget: true }), "Transaction saved.");
+      })
+    );
+    const { user, onSaved } = open();
+    await waitForPickers();
+
+    await user.type(screen.getByLabelText("Amount"), "15000");
+    await user.type(screen.getByLabelText("Description"), "Phone from savings");
+    await user.selectOptions(screen.getByLabelText("Paid from"), "acc-wallet");
+    await user.selectOptions(screen.getByLabelText("Category"), "cat-food");
+    await user.click(screen.getByLabelText("Don't count in Payday Planner"));
+    await user.click(screen.getByRole("button", { name: "Add transaction" }));
+
+    await waitFor(() => expect(onSaved).toHaveBeenCalled());
+    expect(body).toMatchObject({ type: "expense", exclude_from_budget: true });
+
+    await pickType(user, /^Transfer/);
+    expect(screen.queryByLabelText("Don't count in Payday Planner")).not.toBeInTheDocument();
   });
 
   it("sends a transfer with its destination and savings tag", async () => {

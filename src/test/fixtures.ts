@@ -74,6 +74,7 @@ export const transaction = (overrides: Record<string, unknown> = {}) => ({
   payment_method: { id: "pm-cash", name: "Cash" },
   pay_period_id: "pp-1",
   bill_occurrence_id: null,
+  exclude_from_budget: false,
   from_income_record: false,
   from_debt: false,
   from_paylater: false,

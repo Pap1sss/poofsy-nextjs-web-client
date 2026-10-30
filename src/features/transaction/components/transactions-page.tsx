@@ -95,7 +95,18 @@ function AccountCell({ transaction }: { transaction: Transaction }) {
 
 function CategoryCell({ transaction }: { transaction: Transaction }) {
   if (transaction.category) {
-    return <CategoryBadge name={transaction.category.name} color={transaction.category.color} />;
+    const badge = (
+      <CategoryBadge name={transaction.category.name} color={transaction.category.color} />
+    );
+    // Paid from money outside the budget: the Payday Planner skips it (D33).
+    return transaction.exclude_from_budget ? (
+      <span className="inline-flex flex-wrap items-center gap-1.5">
+        {badge}
+        <span className="text-muted-foreground text-xs">Not in planner</span>
+      </span>
+    ) : (
+      badge
+    );
   }
   return <span className="text-muted-foreground text-xs">{TYPE_LABELS[transaction.type]}</span>;
 }

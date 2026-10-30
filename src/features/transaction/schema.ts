@@ -35,6 +35,8 @@ export const transactionSchema = z.object({
   payment_method: namedRef.nullable().optional(),
   pay_period_id: z.string().nullable(),
   bill_occurrence_id: z.string().nullable(),
+  // An expense paid from money outside the budget: the Payday Planner skips it (D33).
+  exclude_from_budget: z.boolean(),
   from_income_record: z.boolean(),
   // A debt payment or a debt's opening movement; edited on the Debts page.
   from_debt: z.boolean(),
@@ -130,6 +132,7 @@ export const TransactionFormSchema = z
     category_id: z.string(),
     payment_method_id: z.string(),
     adjustment_direction: z.enum(ADJUSTMENT_DIRECTIONS).or(z.literal("")),
+    exclude_from_budget: z.boolean(),
     transaction_date: z.string().min(1, "Choose a date."),
     description: z.string().trim().min(1, "Describe what this was for.").max(255),
     notes: z.string().max(2000),
@@ -186,6 +189,7 @@ export function toTransactionPayload(v: TransactionFormValues) {
     category_id: v.type === "expense" || v.type === "transfer" ? v.category_id || null : null,
     payment_method_id: v.payment_method_id || null,
     adjustment_direction: v.type === "adjustment" ? v.adjustment_direction || null : null,
+    exclude_from_budget: v.type === "expense" && v.exclude_from_budget,
     transaction_date: v.transaction_date,
     description: v.description.trim(),
     notes: v.notes.trim() || null,
