@@ -22,11 +22,20 @@ import { useAccountOptions, useCategoryOptions, usePaymentMethodOptions } from "
 import type { TransactionSort, TransactionType } from "../schema";
 import type { useTransactionFilters } from "../use-transaction-filters";
 
-type FiltersState = ReturnType<typeof useTransactionFilters>;
+type FiltersState = ReturnType<typeof useTransactionFilters> & {
+  /** On one account's page the account is fixed, so its picker is left out. */
+  hideAccount?: boolean;
+};
 
 const ALL = "__all__";
 
-export function TransactionFilters({ filters, update, clear, isFiltered }: FiltersState) {
+export function TransactionFilters({
+  filters,
+  update,
+  clear,
+  isFiltered,
+  hideAccount = false,
+}: FiltersState) {
   const accounts = useAccountOptions();
   const categories = useCategoryOptions();
   const paymentMethods = usePaymentMethodOptions();
@@ -42,7 +51,7 @@ export function TransactionFilters({ filters, update, clear, isFiltered }: Filte
   const [expanded, setExpanded] = useState(false);
   const activeCount = (
     ["from", "to", "type", "account_id", "category_id", "payment_method_id"] as const
-  ).filter((key) => filters[key]).length;
+  ).filter((key) => filters[key] && !(hideAccount && key === "account_id")).length;
   const pushSearch = useDebouncedCallback(
     (value: string) => update({ search: value || null }),
     300
@@ -154,19 +163,21 @@ export function TransactionFilters({ filters, update, clear, isFiltered }: Filte
           </Select>
         </div>
 
-        <div className="space-y-1 text-xs">
-          <span className="text-muted-foreground">Account</span>
-          <Autocomplete
-            aria-label="Account"
-            value={filters.account_id ?? ""}
-            onChange={(id) => update({ account_id: id || null })}
-            options={toOptions(accounts.data)}
-            loading={accounts.isLoading}
-            placeholder="All accounts"
-            emptyMessage="No accounts match."
-            clearable
-          />
-        </div>
+        {!hideAccount && (
+          <div className="space-y-1 text-xs">
+            <span className="text-muted-foreground">Account</span>
+            <Autocomplete
+              aria-label="Account"
+              value={filters.account_id ?? ""}
+              onChange={(id) => update({ account_id: id || null })}
+              options={toOptions(accounts.data)}
+              loading={accounts.isLoading}
+              placeholder="All accounts"
+              emptyMessage="No accounts match."
+              clearable
+            />
+          </div>
+        )}
 
         <div className="space-y-1 text-xs">
           <span className="text-muted-foreground">Category</span>

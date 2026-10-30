@@ -18,6 +18,7 @@ import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Sprite, type SpriteName } from "@/components/pixel/sprites";
 import { CategoryBadge } from "@/components/shared/category-badge";
 import { EmptyState } from "@/components/shared/empty-state";
+import { MoneyDisplay } from "@/components/shared/money-display";
 import { PageHeader } from "@/components/shared/page-header";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { routes } from "@/config/routes";
+import { isNegative, type Money } from "@/lib/money";
 
 import { PER_PAGE_OPTIONS, TYPE_LABELS } from "../constant";
 import { useDeleteTransaction, useExportTransactions, useTransactions } from "../hooks";
@@ -187,9 +189,52 @@ function ReceiptMark({ count }: { count: number }) {
   );
 }
 
+/** On one account's page: the money in or out of that account, so a transfer shows its direction. */
+function AccountChange({ change, className }: { change: Money; className?: string }) {
+  return (
+    <MoneyDisplay
+      value={change}
+      tone={isNegative(change) ? "expense" : "income"}
+      signed
+      className={className}
+    />
+  );
+}
+
 export function TransactionsPage() {
+  return (
+    <TransactionLedger
+      header={(actions) => (
+        <PageHeader
+          title="Transactions"
+          sprite="receipt"
+          description="Every expense, income, transfer and balance adjustment, newest first."
+          actions={actions}
+        />
+      )}
+    />
+  );
+}
+
+type TransactionLedgerProps = {
+  /** The page header; it receives the Export and Add buttons to place. */
+  header: (actions: React.ReactNode) => React.ReactNode;
+  /**
+   * Show one account's history: the account filter is fixed, new transactions start in this account,
+   * and each row shows its change to the account and the balance right after it (D34).
+   */
+  accountId?: string;
+  /** The Accounts privacy switch: masks the running balances. */
+  balancesHidden?: boolean;
+};
+
+/** The filtered, paged transaction list with its add, edit and delete flows. */
+export function TransactionLedger({ header, accountId, balancesHidden }: TransactionLedgerProps) {
   const filterState = useTransactionFilters();
-  const { filters, update, isFiltered } = filterState;
+  const { update, isFiltered } = filterState;
+  const filters = accountId
+    ? { ...filterState.filters, account_id: accountId }
+    : filterState.filters;
 
   const list = useTransactions(filters);
   const exportCsv = useExportTransactions();
@@ -227,31 +272,26 @@ export function TransactionsPage() {
 
   return (
     <div className="page-container mx-auto max-w-7xl space-y-6">
-      <PageHeader
-        title="Transactions"
-        sprite="receipt"
-        description="Every expense, income, transfer and balance adjustment, newest first."
-        actions={
-          <>
-            <Button
-              variant="outline"
-              disabled={exportCsv.isPending}
-              onClick={() =>
-                exportCsv.mutate(filters, { onError: (error) => toast.error(error.message) })
-              }
-            >
-              <Download aria-hidden />
-              {exportCsv.isPending ? "Exporting..." : "Export CSV"}
-            </Button>
-            <Button onClick={openNew}>
-              <Plus aria-hidden />
-              Add transaction
-            </Button>
-          </>
-        }
-      />
+      {header(
+        <>
+          <Button
+            variant="outline"
+            disabled={exportCsv.isPending}
+            onClick={() =>
+              exportCsv.mutate(filters, { onError: (error) => toast.error(error.message) })
+            }
+          >
+            <Download aria-hidden />
+            {exportCsv.isPending ? "Exporting..." : "Export CSV"}
+          </Button>
+          <Button onClick={openNew}>
+            <Plus aria-hidden />
+            Add transaction
+          </Button>
+        </>
+      )}
 
-      <TransactionFilters {...filterState} />
+      <TransactionFilters {...filterState} filters={filters} hideAccount={!!accountId} />
 
       {list.isError ? (
         <Alert variant="destructive">
@@ -278,8 +318,12 @@ export function TransactionsPage() {
         ) : (
           <EmptyState
             icon={ArrowLeftRight}
-            title="No transactions yet"
-            description="Add your first expense to start tracking where your money goes."
+            title={accountId ? "No transactions in this account yet" : "No transactions yet"}
+            description={
+              accountId
+                ? "Money you record in or out of this account shows up here."
+                : "Add your first expense to start tracking where your money goes."
+            }
             action={
               <Button onClick={openNew}>
                 <Plus aria-hidden />
@@ -301,6 +345,7 @@ export function TransactionsPage() {
                   <TableHead>Account</TableHead>
                   <TableHead>Payment method</TableHead>
                   <TableHead className="text-right">Amount</TableHead>
+                  {accountId && <TableHead className="text-right">Balance</TableHead>}
                   <TableHead className="w-12">
                     <span className="sr-only">Actions</span>
                   </TableHead>
@@ -332,8 +377,19 @@ export function TransactionsPage() {
                       {t.payment_method?.name ?? "—"}
                     </TableCell>
                     <TableCell className="text-right font-medium">
-                      <TransactionAmount transaction={t} />
+                      {t.account_change ? (
+                        <AccountChange change={t.account_change} />
+                      ) : (
+                        <TransactionAmount transaction={t} />
+                      )}
                     </TableCell>
+                    {accountId && (
+                      <TableCell className="text-right">
+                        {t.balance_after && (
+                          <MoneyDisplay value={t.balance_after} hidden={balancesHidden} />
+                        )}
+                      </TableCell>
+                    )}
                     <TableCell className="text-right">
                       <RowActions transaction={t} onEdit={openEdit} onDelete={setDeleting} />
                     </TableCell>
@@ -359,7 +415,18 @@ export function TransactionsPage() {
                       <AccountCell transaction={t} />
                     </p>
                   </div>
-                  <TransactionAmount transaction={t} className="shrink-0 font-semibold" />
+                  {t.account_change ? (
+                    <div className="shrink-0 text-right">
+                      <AccountChange change={t.account_change} className="font-semibold" />
+                      {t.balance_after && (
+                        <p className="text-muted-foreground text-xs">
+                          Balance <MoneyDisplay value={t.balance_after} hidden={balancesHidden} />
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <TransactionAmount transaction={t} className="shrink-0 font-semibold" />
+                  )}
                 </div>
                 <div className="mt-3 flex items-center justify-between gap-3">
                   <div className="flex min-w-0 flex-wrap items-center gap-2">
@@ -422,7 +489,12 @@ export function TransactionsPage() {
         </>
       )}
 
-      <TransactionForm open={formOpen} onOpenChange={setFormOpen} transaction={editing} />
+      <TransactionForm
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        transaction={editing}
+        defaults={accountId ? { account_id: accountId } : undefined}
+      />
 
       <ConfirmDialog
         open={!!deleting}

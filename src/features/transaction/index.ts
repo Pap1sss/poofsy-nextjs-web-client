@@ -1,4 +1,4 @@
-export { TransactionsPage } from "./components/transactions-page";
+export { TransactionLedger, TransactionsPage } from "./components/transactions-page";
 export {
   TransactionForm,
   type TransactionFormDefaults,
