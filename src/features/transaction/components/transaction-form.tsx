@@ -174,6 +174,8 @@ export function TransactionForm({
 
   const type = useWatch({ control: form.control, name: "type" });
   const accountId = useWatch({ control: form.control, name: "account_id" });
+  const excluded = useWatch({ control: form.control, name: "exclude_from_budget" });
+  const categoryRequired = type === "expense" && !excluded;
 
   // Archived records stay selectable only when this transaction already uses them.
   const usable = <T extends { id: string; name: string; archived_at: string | null }>(
@@ -412,11 +414,11 @@ export function TransactionForm({
                     onBlur={field.onBlur}
                     options={categoryOptions}
                     loading={categories.isLoading}
-                    placeholder={type === "transfer" ? "No category" : "Choose a category"}
+                    placeholder={categoryRequired ? "Choose a category" : "No category"}
                     emptyMessage="No categories match."
                     invalid={fieldState.invalid}
-                    clearable={type === "transfer"}
-                    required={type === "expense"}
+                    clearable={!categoryRequired}
+                    required={categoryRequired}
                   />
                   {fieldState.invalid ? (
                     <FieldError errors={[fieldState.error]} />

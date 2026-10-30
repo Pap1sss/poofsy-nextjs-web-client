@@ -165,7 +165,8 @@ export const TransactionFormSchema = z
       }
     }
 
-    if (v.type === "expense" && !v.category_id) {
+    // An expense kept out of the planner touches no budget line, so it needs no category (D35).
+    if (v.type === "expense" && !v.exclude_from_budget && !v.category_id) {
       ctx.addIssue({
         code: "custom",
         path: ["category_id"],
