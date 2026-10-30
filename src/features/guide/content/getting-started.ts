@@ -140,6 +140,42 @@ export const gettingStarted: GuideTopic = {
       ],
     },
     {
+      id: "account-page",
+      title: "See one account's history",
+      level: "basics",
+      blocks: [
+        {
+          type: "p",
+          text: "Click an account on Accounts & Wallets to open its own page. It shows the current and starting balance, a chart of the balance over the last 90 days, and every transaction that moved money in or out of that account, newest first.",
+        },
+        {
+          type: "terms",
+          items: [
+            {
+              term: "Amount",
+              text: "What the transaction did to this account: + for money in, − for money out. A transfer shows + on the account it went into and − on the one it left.",
+            },
+            {
+              term: "Balance",
+              text: "The account's balance right after that transaction, like a bank statement. It stays correct when you filter or page through the list.",
+            },
+          ],
+        },
+        {
+          type: "callout",
+          tone: "example",
+          text: [
+            "GCash starts at ₱500. You top up ₱800 from BPI on Oct 18, then pay ₱185 for lunch on Oct 20.",
+            "GCash's page lists: Oct 20 · Lunch · −₱185 · Balance ₱1,115. Oct 18 · Top up · +₱800 · Balance ₱1,300.",
+          ],
+        },
+        {
+          type: "p",
+          text: '"Add transaction" on this page starts with this account already chosen, and "Export CSV" exports only this account\'s transactions. Edit and Reconcile are in the menu beside them. "Hide balances" hides the balances here too.',
+        },
+      ],
+    },
+    {
       id: "reconcile",
       title: "Match an account to your bank statement (Reconcile)",
       level: "advanced",
