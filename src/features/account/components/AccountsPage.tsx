@@ -5,7 +5,9 @@ import { Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import Error from "@/components/Error";
-import { Sprite, type SpriteName } from "@/components/pixel/sprites";
+import Link from "next/link";
+
+import { Sprite } from "@/components/pixel/sprites";
 import { DeleteRecordDialog } from "@/components/shared/delete-record-dialog";
 import { EmptyState } from "@/components/shared/empty-state";
 import { HideAmountsButton } from "@/components/shared/hide-amounts-button";
@@ -13,25 +15,15 @@ import { MoneyDisplay } from "@/components/shared/money-display";
 import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { routes } from "@/config/routes";
 import { useHidden } from "@/lib/privacy";
 
+import { ACCOUNT_SPRITE } from "../constant";
 import { useAccounts, useArchiveAccount, useDeleteAccount, useRestoreAccount } from "../hooks";
-import { ACCOUNT_TYPE_LABELS, type Account, type AccountType } from "../schema";
+import { ACCOUNT_TYPE_LABELS, type Account } from "../schema";
 import { AccountForm } from "./AccountForm";
 import { ListStatusTabs, RowActionsMenu, type ListStatus } from "@/components/shared/list-controls";
 import { ReconcileDialog } from "./ReconcileDialog";
-
-// Each account is an item in the wallet menu, drawn by what kind of place the money sits in.
-const TYPE_SPRITE: Record<AccountType, SpriteName> = {
-  cash: "wallet",
-  bank: "card",
-  e_wallet: "card",
-  credit_card: "card",
-  savings: "piggy",
-  investment: "piggy",
-  loan: "bag",
-  other: "bag",
-};
 
 export default function AccountsPage() {
   const [status, setStatus] = useState<ListStatus>("active");
@@ -97,19 +89,27 @@ export default function AccountsPage() {
         <ul className="pixel-panel divide-y-2 divide-dashed px-2 py-1">
           {accounts.data.map((account) => (
             <li key={account.id} className="flex items-center gap-4 px-2 py-4 sm:px-4">
-              <Sprite name={TYPE_SPRITE[account.type]} size={24} />
-              <div className="min-w-0 flex-1">
-                <p className="font-pixel truncate text-base">{account.name}</p>
-                <p className="text-muted-foreground truncate text-sm">
-                  {ACCOUNT_TYPE_LABELS[account.type]}
-                  {account.notes ? `, ${account.notes}` : ""}
-                </p>
-              </div>
-              <MoneyDisplay
-                value={account.current_balance}
-                hidden={balancesHidden}
-                className="font-stat text-2xl sm:text-3xl"
-              />
+              {/* The whole row opens the account's own page; the actions menu stays separate. */}
+              <Link
+                href={routes.account(account.id)}
+                className="group flex min-w-0 flex-1 items-center gap-4"
+              >
+                <Sprite name={ACCOUNT_SPRITE[account.type]} size={24} />
+                <div className="min-w-0 flex-1">
+                  <p className="font-pixel truncate text-base group-hover:underline">
+                    {account.name}
+                  </p>
+                  <p className="text-muted-foreground truncate text-sm">
+                    {ACCOUNT_TYPE_LABELS[account.type]}
+                    {account.notes ? `, ${account.notes}` : ""}
+                  </p>
+                </div>
+                <MoneyDisplay
+                  value={account.current_balance}
+                  hidden={balancesHidden}
+                  className="font-stat text-2xl sm:text-3xl"
+                />
+              </Link>
               <RowActionsMenu
                 label={`Actions for ${account.name}`}
                 actions={
