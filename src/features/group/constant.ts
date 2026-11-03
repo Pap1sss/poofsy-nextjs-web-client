@@ -22,6 +22,14 @@ export const CHARGE_ALLOCATIONS = [
   "assigned",
 ] as const;
 export const GROUP_STATUSES = ["active", "completed"] as const;
+/** How one item in a "By items" split is divided among the people who had it. */
+export const ITEM_SPLITS = ["equal", "shares", "amount"] as const;
+
+export const ITEM_SPLIT_LABELS = {
+  equal: "Equally",
+  shares: "By shares",
+  amount: "By amount",
+} as const;
 
 export const SPLIT_LABELS = {
   equal: "Equally",
@@ -40,7 +48,8 @@ export const SPLIT_HINTS = {
     "Give each person a number of shares, like 2 for someone who had double. Decimals work (1.5).",
   percent: "Give each person a percentage. They must add up to 100%.",
   quantity: "Type how much each person used or had, like 3 bottles or 2 kilos.",
-  items: "List what was ordered and tick who had each item. Shared items are split equally.",
+  items:
+    "List what was ordered and tick who had each item. A shared item is split equally, or by shares (like pieces) or amounts.",
 } as const;
 
 export const CHARGE_LABELS = {
