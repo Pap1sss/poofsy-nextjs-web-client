@@ -8,6 +8,7 @@ import {
   InputGroupText,
 } from "@/components/ui/input-group";
 import { currencySymbol, parseAmountInput } from "@/lib/money";
+import { cn } from "@/lib/utils/component";
 
 type CurrencyInputProps = Omit<React.ComponentProps<"input">, "value" | "onChange" | "type"> & {
   /** A decimal string such as "1000.50"; never a number, so nothing is lost to floating point. */
@@ -21,14 +22,27 @@ type CurrencyInputProps = Omit<React.ComponentProps<"input">, "value" | "onChang
  * Amount entry that keeps the value as a string and emits a normalized decimal
  * (digits, one point, at most the currency's minor units). The API does the maths.
  */
-export function CurrencyInput({ value, onChange, currency, onBlur, ...props }: CurrencyInputProps) {
+export function CurrencyInput({
+  value,
+  onChange,
+  currency,
+  onBlur,
+  className,
+  ...props
+}: CurrencyInputProps) {
   const settings = useUserSettings();
   const code = currency ?? settings.currency;
   const minorUnits = code === settings.currency ? settings.minorUnits : 2;
 
   return (
     // The same pixel box as Input (h-10, 2px border, inset shadow), so money fields line up beside others.
-    <InputGroup className="bg-card dark:bg-card h-10 rounded-none border-2 shadow-[inset_2px_2px_0_0_var(--muted)]">
+    // className sizes the whole box (e.g. a fixed width in a row), not just the inner input.
+    <InputGroup
+      className={cn(
+        "bg-card dark:bg-card h-10 rounded-none border-2 shadow-[inset_2px_2px_0_0_var(--muted)]",
+        className
+      )}
+    >
       <InputGroupAddon>
         <InputGroupText>{currencySymbol(code, settings.locale)}</InputGroupText>
       </InputGroupAddon>
