@@ -51,12 +51,13 @@ export const transactions: GuideTopic = {
           type: "steps",
           items: [
             'Click "Add transaction" (on a phone, the big + button in the bottom bar).',
-            "Choose Expense.",
-            "Enter the amount and the date (today is filled in).",
+            "Choose Expense in the strip at the top (a new transaction starts on it).",
+            "Enter the amount.",
             'Write a short description, such as "Lunch at Jollibee".',
             'Choose the account under "Paid from".',
             'Pick a spending category. Expenses need one, unless "Don\'t count in Payday Planner" is ticked.',
-            "Optionally choose a payment method and add notes, then save.",
+            "Check the date: Today is picked; tap Yesterday or choose another date.",
+            'Optionally open "More options" to choose a payment method or add notes, then save.',
           ],
         },
         {
@@ -79,8 +80,8 @@ export const transactions: GuideTopic = {
           tone: "tip",
           title: "Spending money you already had",
           text: [
-            'Tick "Don\'t count in Payday Planner" when an expense is paid from money you had before this payday, such as savings or an account\'s starting balance. The category becomes optional; without one, Reports show it as Uncategorised.',
-            'The account balance still drops, and it still counts as Spent on Home and in Reports. Only the Payday Planner skips it, so this cutoff\'s budget isn\'t affected. The transaction list marks it "Not in planner".',
+            "Tick \"Don't count in Payday Planner\" when an expense is paid from money you had before this payday, such as savings or an account's starting balance. The category becomes optional; without one, Reports show it as Uncategorised.",
+            "The account balance still drops, and it still counts as Spent on Home and in Reports. Only the Payday Planner skips it, so this cutoff's budget isn't affected. The transaction list marks it \"Not in planner\".",
           ],
         },
       ],

@@ -157,6 +157,7 @@ describe("TransactionForm saving", () => {
     await user.type(screen.getByLabelText("Description"), "  Groceries  ");
     await user.selectOptions(screen.getByLabelText("Paid from"), "acc-wallet");
     await user.selectOptions(screen.getByLabelText("Category"), "cat-food");
+    await user.click(screen.getByRole("button", { name: /More options/ }));
     await user.selectOptions(screen.getByLabelText("Payment method"), "pm-gcash");
     await user.click(screen.getByRole("button", { name: "Add transaction" }));
 
@@ -253,6 +254,30 @@ describe("TransactionForm saving", () => {
 
     await pickType(user, /^Transfer/);
     expect(screen.queryByLabelText("Don't count in Payday Planner")).not.toBeInTheDocument();
+  });
+
+  it("dates a transaction yesterday with one tap", async () => {
+    let body: Record<string, unknown> | undefined;
+    server.use(
+      http.post("*/api/transactions", async ({ request }) => {
+        body = (await request.json()) as Record<string, unknown>;
+        return ok(transaction(), "Transaction saved.");
+      })
+    );
+    const { user, onSaved } = open();
+    await waitForPickers();
+
+    expect(screen.getByRole("button", { name: "Today" })).toHaveAttribute("aria-pressed", "true");
+    await user.type(screen.getByLabelText("Amount"), "120");
+    await user.type(screen.getByLabelText("Description"), "Jeepney fare");
+    await user.selectOptions(screen.getByLabelText("Paid from"), "acc-wallet");
+    await user.selectOptions(screen.getByLabelText("Category"), "cat-food");
+    await user.click(screen.getByRole("button", { name: "Yesterday" }));
+    expect(screen.getByLabelText("Date")).toHaveValue("2026-10-20");
+    await user.click(screen.getByRole("button", { name: "Add transaction" }));
+
+    await waitFor(() => expect(onSaved).toHaveBeenCalled());
+    expect(body).toMatchObject({ transaction_date: "2026-10-20" });
   });
 
   it("sends a transfer with its destination and savings tag", async () => {
