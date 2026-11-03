@@ -60,11 +60,12 @@ export const groups: GuideTopic = {
         {
           type: "steps",
           items: [
-            'Open the group and click "Add expense". Say what it was and the date; a category is optional.',
-            "Pick how it's split and fill in the amount and the people (see the list below).",
+            'Open the group and click "Add expense". Say what it was and enter the amount.',
+            'Under "Who paid?" tap one person (they paid the whole total; you\'re picked to start) or "Several people" and type what each paid. The amounts paid must add up to the total.',
+            'Pick how it\'s split and choose the people (see the list below). "Everyone" and "Nobody" tick or untick them all at once.',
             "Add any fees or discounts, each with its own rule.",
-            'Under "Who paid?" pick one person (they paid the whole total) or "Several people" and type what each paid. The amounts paid must add up to the total.',
-            "Check the Breakdown, then save.",
+            'The date is today. To change it, or to add a category or notes, open "Details".',
+            'Check "Who owes what", then save. The total and the save button stay at the bottom of the form.',
           ],
         },
         {
@@ -96,7 +97,7 @@ export const groups: GuideTopic = {
         {
           type: "callout",
           tone: "tip",
-          text: "The Breakdown under the form is worked out by Poofsy as you type: each person's base, fees, discounts and what they owe. If something doesn't add up (percentages short of 100%, amounts that don't match), the message appears there before you save.",
+          text: "\"Who owes what\" near the bottom of the form is worked out by Poofsy as you type: what each person owes, with their base, fees and discounts underneath when there are any. If something doesn't add up (percentages short of 100%, amounts that don't match), the message appears there before you save.",
         },
       ],
     },
