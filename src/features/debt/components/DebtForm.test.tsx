@@ -102,11 +102,42 @@ describe("DebtForm: a new person typed by name", () => {
       auth: onboardedAuth(),
     });
 
-    await user.click(await screen.findByRole("button", { name: "+ Someone new" }));
+    await user.click(await screen.findByRole("button", { name: "Someone new" }));
     await fillAndSubmit(user);
 
     await waitFor(() => expect(posted).toHaveLength(1));
     expect(posted[0]).toMatchObject({ person_name: "Pines" });
+  });
+});
+
+describe("DebtForm: quick picks", () => {
+  it("picks a saved person with one tap, sums it up in a sentence, and dates it yesterday", async () => {
+    server.use(peopleReturning([{ id: "person-9", name: "Juan" }]));
+    const { user } = renderWithProviders(<DebtForm open onOpenChange={() => {}} debt={null} />, {
+      auth: onboardedAuth(),
+    });
+
+    await user.click(await screen.findByRole("button", { name: "Juan" }));
+    await user.type(screen.getByLabelText("Amount"), "500");
+    expect(screen.getByText(/^Juan owes you/)).toBeInTheDocument();
+    await user.type(screen.getByLabelText("What's it for?"), "Lunch");
+    const today = (screen.getByLabelText("Date") as HTMLInputElement).value;
+    await user.click(screen.getByRole("button", { name: "Yesterday" }));
+    const yesterday = (screen.getByLabelText("Date") as HTMLInputElement).value;
+    expect(yesterday).not.toBe(today);
+    expect(screen.getByRole("button", { name: "Yesterday" })).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
+    await user.click(screen.getByRole("button", { name: "Add debt" }));
+
+    await waitFor(() => expect(posted).toHaveLength(1));
+    expect(posted[0]).toMatchObject({
+      person_id: "person-9",
+      direction: "receivable",
+      debt_date: yesterday,
+    });
+    expect(posted[0]).not.toHaveProperty("person_name");
   });
 
   it("still saves after the account picker is shown and hidden again", async () => {
