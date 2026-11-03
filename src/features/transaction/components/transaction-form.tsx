@@ -1,8 +1,18 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  ArrowDown,
+  ArrowDownLeft,
+  ArrowLeftRight,
+  ArrowUpRight,
+  ChevronDown,
+  SlidersHorizontal,
+  type LucideIcon,
+} from "lucide-react";
+import { RadioGroup } from "radix-ui";
 import { toast } from "sonner";
 
 import { poof } from "@/components/pixel/poof";
@@ -12,6 +22,7 @@ import { CurrencyInput } from "@/components/shared/currency-input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Field,
   FieldContent,
@@ -22,6 +33,7 @@ import {
 } from "@/components/ui/field";
 import { FormShell } from "@/components/ui/form-shell";
 import { Input } from "@/components/ui/input";
+import { segmentClass } from "@/components/ui/segments";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { useUserSettings } from "@/features/auth/hooks/useUserSettings";
@@ -70,12 +82,21 @@ export type TransactionFormProps = {
   onSaved?: (transaction: Transaction) => void;
 };
 
-const TYPE_CHOICES = [
-  { value: "expense", label: TYPE_LABELS.expense, description: "Money you spent" },
-  { value: "income", label: TYPE_LABELS.income, description: "Money you received" },
-  { value: "transfer", label: TYPE_LABELS.transfer, description: "Between your own accounts" },
-  { value: "adjustment", label: TYPE_LABELS.adjustment, description: "Correct a balance" },
-] as const;
+/** The type strip: an icon each, and one plain sentence under the strip for the chosen type. */
+const TYPE_CHOICES: { value: TransactionType; icon: LucideIcon; hint: string }[] = [
+  { value: "expense", icon: ArrowUpRight, hint: "Money you spent. It leaves an account." },
+  { value: "income", icon: ArrowDownLeft, hint: "Money you received. It goes into an account." },
+  {
+    value: "transfer",
+    icon: ArrowLeftRight,
+    hint: "Moving money between your own accounts. It isn't spending or income.",
+  },
+  {
+    value: "adjustment",
+    icon: SlidersHorizontal,
+    hint: "Fix an account's balance so it matches your bank or wallet.",
+  },
+];
 
 const DIRECTION_CHOICES = [
   { value: "increase", label: "Balance goes up" },
@@ -87,6 +108,13 @@ const ACCOUNT_LABEL: Record<TransactionType, string> = {
   income: "Received in",
   transfer: "From account",
   adjustment: "Account",
+};
+
+const DESCRIPTION_PLACEHOLDER: Record<TransactionType, string> = {
+  expense: "Groceries, jeepney fare",
+  income: "Salary, sideline, gift",
+  transfer: "Savings to MariBank",
+  adjustment: "Match bank statement",
 };
 
 const FIELDS = [
@@ -106,6 +134,13 @@ const FIELDS = [
 /** Today's date in the user's own time zone, as YYYY-MM-DD. */
 const todayIn = (timeZone: string) =>
   new Intl.DateTimeFormat("en-CA", { timeZone }).format(new Date());
+
+/** The calendar day before a YYYY-MM-DD date, parsed as local midnight so no time zone shifts it. */
+const dayBefore = (date: string) => {
+  const d = new Date(`${date}T00:00:00`);
+  d.setDate(d.getDate() - 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
 
 function initialValues(
   transaction: Transaction | null | undefined,
@@ -155,27 +190,37 @@ export function TransactionForm({
 }: TransactionFormProps) {
   const { timezone, locale } = useUserSettings();
   const editing = !!transaction;
+  const today = todayIn(timezone);
+  const yesterday = dayBefore(today);
 
   const accounts = useAccountOptions();
   const categories = useCategoryOptions();
   const paymentMethods = usePaymentMethodOptions();
   const { mutate: save, isPending } = useSaveTransaction();
+  const [moreOpen, setMoreOpen] = useState(false);
 
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(TransactionFormSchema),
-    defaultValues: initialValues(transaction, defaults, todayIn(timezone)),
+    defaultValues: initialValues(transaction, defaults, today),
   });
 
   // Each time the shell opens, start from the record (or the defaults) it was opened for.
   useEffect(() => {
-    if (open) form.reset(initialValues(transaction, defaults, todayIn(timezone)));
+    if (open) {
+      form.reset(initialValues(transaction, defaults, todayIn(timezone)));
+      setMoreOpen(false);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, transaction?.id]);
 
   const type = useWatch({ control: form.control, name: "type" });
   const accountId = useWatch({ control: form.control, name: "account_id" });
   const excluded = useWatch({ control: form.control, name: "exclude_from_budget" });
+  const date = useWatch({ control: form.control, name: "transaction_date" });
+  const paymentMethodId = useWatch({ control: form.control, name: "payment_method_id" });
+  const notes = useWatch({ control: form.control, name: "notes" });
   const categoryRequired = type === "expense" && !excluded;
+  const hasPaymentMethod = type !== "adjustment";
 
   // Archived records stay selectable only when this transaction already uses them.
   const usable = <T extends { id: string; name: string; archived_at: string | null }>(
@@ -204,6 +249,11 @@ export function TransactionForm({
     toOption
   );
 
+  const paymentMethodName = paymentMethods.data?.find((m) => m.id === paymentMethodId)?.name;
+  const moreSummary =
+    [hasPaymentMethod && paymentMethodName, notes.trim() && "Note"].filter(Boolean).join(" · ") ||
+    (hasPaymentMethod ? "Payment method, notes" : "Notes");
+
   const changeType = (next: TransactionType) => {
     form.setValue("type", next);
     // A spending category can't stay on a transfer, nor a savings one on an expense.
@@ -228,11 +278,20 @@ export function TransactionForm({
           onSaved?.(res.data);
           onOpenChange(false);
         },
-        onError: (error) => applyApiErrors(error, form.setError, FIELDS),
+        onError: (error) => {
+          applyApiErrors(error, form.setError, FIELDS);
+          if (
+            form.getFieldState("payment_method_id").invalid ||
+            form.getFieldState("notes").invalid
+          ) {
+            setMoreOpen(true);
+          }
+        },
       }
     );
 
   const rootError = form.formState.errors.root?.message;
+  const typeHint = TYPE_CHOICES.find((c) => c.value === type)?.hint;
 
   return (
     <FormShell
@@ -241,26 +300,57 @@ export function TransactionForm({
       title={editing ? "Edit transaction" : "Add transaction"}
       size="xl"
     >
-      <form id="transaction-form" noValidate onSubmit={form.handleSubmit(onSubmit)}>
+      <form
+        id="transaction-form"
+        noValidate
+        onSubmit={form.handleSubmit(onSubmit, (errors) => {
+          if (errors.payment_method_id || errors.notes) setMoreOpen(true);
+        })}
+      >
         <FieldGroup>
+          {/* 1. What kind of money movement: one compact strip, explained in a sentence. */}
           <Field>
-            <FieldLabel id="transaction-type-label">Type</FieldLabel>
-            <ChoiceCards
+            <FieldLabel id="transaction-type-label" className="sr-only">
+              Type
+            </FieldLabel>
+            <RadioGroup.Root
               aria-labelledby="transaction-type-label"
               value={type}
-              onValueChange={changeType}
-              choices={TYPE_CHOICES}
-              // 2×2 on phones too: four stacked tiles would fill the first screen.
-              className="grid-cols-2 [&_[role=radio]]:px-3 sm:[&_[role=radio]]:px-4"
-            />
+              onValueChange={(next) => changeType(next as TransactionType)}
+              className="pixel-box bg-muted grid grid-cols-4 gap-1 p-1"
+            >
+              {TYPE_CHOICES.map(({ value, icon: Icon }) => (
+                <RadioGroup.Item
+                  key={value}
+                  value={value}
+                  className={cn(
+                    segmentClass,
+                    "h-auto min-h-14 cursor-pointer flex-col gap-1 px-1 py-1.5 text-xs sm:text-sm",
+                    "data-[state=checked]:border-outline data-[state=checked]:bg-highlight data-[state=checked]:text-highlight-foreground"
+                  )}
+                >
+                  <Icon aria-hidden className="size-4" />
+                  {TYPE_LABELS[value]}
+                </RadioGroup.Item>
+              ))}
+            </RadioGroup.Root>
+            <FieldDescription aria-live="polite">{typeHint}</FieldDescription>
           </Field>
 
-          <div className="grid gap-6 sm:grid-cols-2">
+          {/* 2. How much and what for: the two fields every transaction needs. */}
+          <div className="pixel-panel space-y-3 p-3">
             <Controller
               name="amount"
               control={form.control}
               render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
+                <Field
+                  data-invalid={fieldState.invalid}
+                  className={cn(
+                    "[&_[data-slot=input-group]]:h-14 [&_input]:font-stat [&_input]:text-3xl",
+                    type === "expense" && "[&_input]:text-expense",
+                    type === "income" && "[&_input]:text-income"
+                  )}
+                >
                   <FieldLabel htmlFor="transaction-amount">Amount</FieldLabel>
                   <CurrencyInput
                     id="transaction-amount"
@@ -269,6 +359,7 @@ export function TransactionForm({
                     onBlur={field.onBlur}
                     aria-invalid={fieldState.invalid}
                     placeholder="0.00"
+                    autoFocus={!editing}
                   />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
@@ -276,16 +367,19 @@ export function TransactionForm({
             />
 
             <Controller
-              name="transaction_date"
+              name="description"
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="transaction-date">Date</FieldLabel>
+                  <FieldLabel htmlFor="transaction-description">Description</FieldLabel>
                   <Input
                     {...field}
-                    id="transaction-date"
-                    type="date"
+                    id="transaction-description"
                     aria-invalid={fieldState.invalid}
+                    placeholder={DESCRIPTION_PLACEHOLDER[type]}
+                    maxLength={255}
+                    enterKeyHint="next"
+                    className="h-11"
                   />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
@@ -293,34 +387,8 @@ export function TransactionForm({
             />
           </div>
 
-          <Controller
-            name="description"
-            control={form.control}
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor="transaction-description">Description</FieldLabel>
-                <Input
-                  {...field}
-                  id="transaction-description"
-                  aria-invalid={fieldState.invalid}
-                  placeholder={
-                    type === "income"
-                      ? "Salary, sideline, gift"
-                      : type === "transfer"
-                        ? "Savings to MariBank"
-                        : type === "adjustment"
-                          ? "Match bank statement"
-                          : "Groceries, jeepney fare"
-                  }
-                  maxLength={255}
-                />
-                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-              </Field>
-            )}
-          />
-
-          {/* Two columns only for a transfer (from and to); otherwise the account takes the full row. */}
-          <div className={cn("grid gap-6", type === "transfer" && "sm:grid-cols-2")}>
+          {/* 3. Where the money moves. A transfer reads top to bottom: from ↓ to. */}
+          <div className="space-y-2">
             <Controller
               name="account_id"
               control={form.control}
@@ -353,50 +421,54 @@ export function TransactionForm({
             />
 
             {type === "transfer" && (
-              <Controller
-                name="to_account_id"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="transaction-to-account">To account</FieldLabel>
-                    <Autocomplete
-                      id="transaction-to-account"
-                      value={field.value}
-                      onChange={field.onChange}
-                      onBlur={field.onBlur}
-                      options={toAccountOptions}
-                      loading={accounts.isLoading}
-                      placeholder="Choose an account"
-                      emptyMessage="No accounts match."
-                      invalid={fieldState.invalid}
-                      required
-                    />
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                  </Field>
-                )}
-              />
-            )}
-
-            {type === "adjustment" && (
-              <Controller
-                name="adjustment_direction"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel id="transaction-direction-label">Direction</FieldLabel>
-                    <ChoiceCards
-                      aria-labelledby="transaction-direction-label"
-                      // "" (nothing picked yet) leaves both tiles unchecked.
-                      value={field.value as "increase" | "decrease"}
-                      onValueChange={field.onChange}
-                      choices={DIRECTION_CHOICES}
-                    />
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                  </Field>
-                )}
-              />
+              <>
+                <ArrowDown aria-hidden className="text-muted-foreground mx-auto size-5" />
+                <Controller
+                  name="to_account_id"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="transaction-to-account">To account</FieldLabel>
+                      <Autocomplete
+                        id="transaction-to-account"
+                        value={field.value}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        options={toAccountOptions}
+                        loading={accounts.isLoading}
+                        placeholder="Choose an account"
+                        emptyMessage="No accounts match."
+                        invalid={fieldState.invalid}
+                        required
+                      />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    </Field>
+                  )}
+                />
+              </>
             )}
           </div>
+
+          {type === "adjustment" && (
+            <Controller
+              name="adjustment_direction"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel id="transaction-direction-label">Direction</FieldLabel>
+                  <ChoiceCards
+                    aria-labelledby="transaction-direction-label"
+                    // "" (nothing picked yet) leaves both tiles unchecked.
+                    value={field.value as "increase" | "decrease"}
+                    onValueChange={field.onChange}
+                    choices={DIRECTION_CHOICES}
+                    className="grid-cols-2"
+                  />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+          )}
 
           {(type === "expense" || type === "transfer") && (
             <Controller
@@ -425,7 +497,7 @@ export function TransactionForm({
                   ) : (
                     type === "transfer" && (
                       <FieldDescription>
-                        Tag savings so they count toward that goal.
+                        Optional. Tag savings so they count toward that goal.
                       </FieldDescription>
                     )
                   )}
@@ -459,49 +531,99 @@ export function TransactionForm({
             />
           )}
 
-          {type !== "adjustment" && (
-            <Controller
-              name="payment_method_id"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="transaction-payment-method">Payment method</FieldLabel>
-                  <Autocomplete
-                    id="transaction-payment-method"
-                    value={field.value}
-                    onChange={field.onChange}
-                    onBlur={field.onBlur}
-                    options={paymentMethodOptions}
-                    loading={paymentMethods.isLoading}
-                    placeholder="Not specified"
-                    emptyMessage="No payment methods match."
-                    invalid={fieldState.invalid}
-                    clearable
-                  />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
-          )}
-
+          {/* 4. When: today is the default; one tap for yesterday, or pick any date. */}
           <Controller
-            name="notes"
+            name="transaction_date"
             control={form.control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor="transaction-notes">Notes</FieldLabel>
-                <Textarea
-                  {...field}
-                  id="transaction-notes"
-                  rows={2}
-                  maxLength={2000}
-                  aria-invalid={fieldState.invalid}
-                  placeholder="Optional"
-                />
+                <FieldLabel htmlFor="transaction-date">Date</FieldLabel>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { value: today, label: "Today" },
+                    { value: yesterday, label: "Yesterday" },
+                  ].map((chip) => (
+                    <button
+                      key={chip.label}
+                      type="button"
+                      aria-pressed={date === chip.value}
+                      onClick={() => form.setValue("transaction_date", chip.value)}
+                      className={cn(segmentClass, "pixel-box bg-card h-10 px-3")}
+                    >
+                      {chip.label}
+                    </button>
+                  ))}
+                  <Input
+                    {...field}
+                    id="transaction-date"
+                    type="date"
+                    aria-invalid={fieldState.invalid}
+                    className="h-10 w-auto min-w-40 flex-1"
+                  />
+                </div>
                 {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
               </Field>
             )}
           />
+
+          {/* 5. Optional extras, folded away with a summary of what's set. */}
+          <Collapsible open={moreOpen} onOpenChange={setMoreOpen}>
+            <CollapsibleTrigger className="pixel-box bg-card hover:bg-accent focus-visible:outline-highlight group flex min-h-11 w-full items-center gap-2 px-3 text-left outline-none focus-visible:outline-3">
+              <span className="font-pixel text-sm">More options</span>
+              <span className="text-muted-foreground min-w-0 flex-1 truncate text-right text-sm">
+                {moreSummary}
+              </span>
+              <ChevronDown
+                className="size-4 shrink-0 transition-transform group-data-[state=open]:rotate-180 motion-reduce:transition-none"
+                aria-hidden
+              />
+            </CollapsibleTrigger>
+            <CollapsibleContent className="grid gap-4 pt-3">
+              {hasPaymentMethod && (
+                <Controller
+                  name="payment_method_id"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="transaction-payment-method">Payment method</FieldLabel>
+                      <Autocomplete
+                        id="transaction-payment-method"
+                        value={field.value}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        options={paymentMethodOptions}
+                        loading={paymentMethods.isLoading}
+                        placeholder="Not specified"
+                        emptyMessage="No payment methods match."
+                        invalid={fieldState.invalid}
+                        clearable
+                      />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    </Field>
+                  )}
+                />
+              )}
+
+              <Controller
+                name="notes"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="transaction-notes">Notes</FieldLabel>
+                    <Textarea
+                      {...field}
+                      id="transaction-notes"
+                      rows={2}
+                      maxLength={2000}
+                      aria-invalid={fieldState.invalid}
+                      placeholder="Optional"
+                    />
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                )}
+              />
+            </CollapsibleContent>
+          </Collapsible>
 
           {rootError && (
             <Alert variant="destructive">
@@ -510,11 +632,23 @@ export function TransactionForm({
           )}
         </FieldGroup>
 
-        <div className="mt-6 flex justify-end gap-2">
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+        {/* Pinned to the bottom of the dialog or sheet, so saving never needs a scroll. */}
+        <div
+          className={cn(
+            "bg-card border-outline sticky -bottom-[19px] z-10 -mx-[19px] mt-6 -mb-[19px] flex justify-end gap-2 border-t-2 px-[19px] py-3 in-data-[slot=sheet-content]:-bottom-4 in-data-[slot=sheet-content]:-mx-4 in-data-[slot=sheet-content]:-mb-4 in-data-[slot=sheet-content]:px-4",
+            // Receipts follow the form when editing, so the bar can't pull them up underneath it.
+            editing && "mb-0 in-data-[slot=sheet-content]:mb-0"
+          )}
+        >
+          <Button
+            type="button"
+            variant="outline"
+            className="h-11"
+            onClick={() => onOpenChange(false)}
+          >
             Cancel
           </Button>
-          <Button type="submit" disabled={isPending} className="min-w-28">
+          <Button type="submit" disabled={isPending} className="h-11 min-w-36 flex-1 sm:flex-none">
             {isPending ? "Saving..." : editing ? "Save changes" : "Add transaction"}
           </Button>
         </div>
