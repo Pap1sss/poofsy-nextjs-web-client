@@ -46,6 +46,8 @@ import {
   CHARGE_KINDS,
   CHARGE_LABELS,
   isDiscount,
+  ITEM_SPLIT_LABELS,
+  ITEM_SPLITS,
   SPLIT_HINTS,
   SPLIT_LABELS,
   SPLIT_METHODS,
@@ -96,6 +98,15 @@ const toNumberInput = (v: string) =>
     .replace(/(\..*)\./g, "$1")
     .match(/^\d*\.?\d{0,4}/) ?? [""])[0];
 
+const blankItem = (): ExpenseFormValues["items"][number] => ({
+  name: "",
+  unit_price: "",
+  quantity: "1",
+  participant_ids: [],
+  split: "equal",
+  values: {},
+});
+
 const blankParts = (people: Participant[], included = true): Record<string, PartInput> =>
   Object.fromEntries(people.map((p) => [p.id, { included, value: "" }]));
 
@@ -133,7 +144,7 @@ function defaults(
       split_method: "equal",
       subtotal: "",
       parts: blankParts(people),
-      items: [{ name: "", unit_price: "", quantity: "1", participant_ids: [] }],
+      items: [blankItem()],
       charges: [],
       payer_mode: "single",
       payer_id: me?.id ?? people[0]?.id ?? "",
@@ -159,8 +170,12 @@ function defaults(
           unit_price: item.unit_price.amount,
           quantity: item.quantity,
           participant_ids: item.participant_ids,
+          split: item.split,
+          values: Object.fromEntries(
+            Object.entries(item.values ?? {}).map(([id, value]) => [id, value ?? ""])
+          ),
         }))
-      : [{ name: "", unit_price: "", quantity: "1", participant_ids: [] }],
+      : [blankItem()],
     charges: expense.charges.map((charge) => ({
       kind: charge.kind,
       label: charge.label ?? "",
@@ -409,9 +424,7 @@ function ExpenseFormBody({
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() =>
-                  items.append({ name: "", unit_price: "", quantity: "1", participant_ids: [] })
-                }
+                onClick={() => items.append(blankItem())}
               >
                 <Plus aria-hidden />
                 Add item
@@ -793,6 +806,10 @@ function ItemRow({
   lineTotal?: Allocation["base"];
   onRemove?: () => void;
 }) {
+  const split = useWatch({ control, name: `items.${index}.split` });
+  const ids = useWatch({ control, name: `items.${index}.participant_ids` });
+  const chosen = people.filter((p) => ids.includes(p.id));
+
   return (
     <div className="pixel-box space-y-3 p-3">
       <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 sm:grid-cols-[minmax(0,1fr)_9rem_5rem_auto]">
@@ -877,6 +894,71 @@ function ItemRow({
           </div>
         )}
       />
+      <Controller
+        name={`items.${index}.split`}
+        control={control}
+        render={({ field }) => (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-muted-foreground text-xs">Split:</span>
+            <div
+              role="group"
+              aria-label={`How item ${index + 1} is split`}
+              className={cn(segmentListClass, "h-auto flex-wrap sm:h-auto")}
+            >
+              {ITEM_SPLITS.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  aria-pressed={field.value === s}
+                  onClick={() => field.onChange(s)}
+                  className={cn(segmentClass, "h-8 px-2 text-xs")}
+                >
+                  {ITEM_SPLIT_LABELS[s]}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      />
+      {split !== "equal" && chosen.length > 0 && (
+        <ul className="divide-border divide-y divide-dashed">
+          {chosen.map((p) => (
+            <li key={p.id} className="flex items-center gap-3 py-1.5">
+              <span className="min-w-0 flex-1 truncate text-sm">
+                {p.name}
+                {p.is_me && <span className="text-muted-foreground"> (me)</span>}
+              </span>
+              <Controller
+                name={`items.${index}.values.${p.id}`}
+                control={control}
+                render={({ field }) =>
+                  split === "amount" ? (
+                    <CurrencyInput
+                      aria-label={`${p.name}'s amount for item ${index + 1}`}
+                      className="w-32"
+                      value={field.value ?? ""}
+                      onChange={(v) => field.onChange(v)}
+                      placeholder="0.00"
+                    />
+                  ) : (
+                    <div className="flex items-center gap-1">
+                      <Input
+                        aria-label={`${p.name}'s shares of item ${index + 1}`}
+                        inputMode="decimal"
+                        className="w-24 tabular-nums"
+                        value={field.value ?? ""}
+                        onChange={(event) => field.onChange(toNumberInput(event.target.value))}
+                        placeholder="0"
+                      />
+                      <span className="text-muted-foreground w-12 text-xs">shares</span>
+                    </div>
+                  )
+                }
+              />
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

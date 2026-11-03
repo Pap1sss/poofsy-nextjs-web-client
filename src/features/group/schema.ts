@@ -3,9 +3,16 @@ import { z } from "zod";
 import { moneySchema } from "@/lib/money";
 import { resSchema } from "@/lib/schemas";
 
-import { CHARGE_ALLOCATIONS, CHARGE_KINDS, GROUP_STATUSES, SPLIT_METHODS } from "./constant";
+import {
+  CHARGE_ALLOCATIONS,
+  CHARGE_KINDS,
+  GROUP_STATUSES,
+  ITEM_SPLITS,
+  SPLIT_METHODS,
+} from "./constant";
 
 export type SplitMethod = (typeof SPLIT_METHODS)[number];
+export type ItemSplit = (typeof ITEM_SPLITS)[number];
 export type ChargeKind = (typeof CHARGE_KINDS)[number];
 export type ChargeAllocation = (typeof CHARGE_ALLOCATIONS)[number];
 export type GroupStatus = (typeof GROUP_STATUSES)[number];
@@ -90,6 +97,9 @@ export const groupExpenseSchema = z.object({
       quantity: z.string(),
       line_total: moneySchema,
       participant_ids: z.array(z.string()),
+      split: z.enum(ITEM_SPLITS),
+      // participant id => shares or amount; null on an equal split.
+      values: z.record(z.string(), z.string().nullable()).nullable(),
     })
   ),
   charges: z.array(
@@ -214,7 +224,15 @@ export type ExpenseFormValues = {
   split_method: SplitMethod;
   subtotal: string;
   parts: Record<string, PartInput>;
-  items: { name: string; unit_price: string; quantity: string; participant_ids: string[] }[];
+  items: {
+    name: string;
+    unit_price: string;
+    quantity: string;
+    participant_ids: string[];
+    split: ItemSplit;
+    /** Shares or amount per participant id; sent only when split isn't equal. */
+    values: Record<string, string>;
+  }[];
   charges: {
     kind: ChargeKind;
     label: string;

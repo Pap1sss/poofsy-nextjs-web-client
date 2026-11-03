@@ -52,7 +52,14 @@ describe("toExpensePayload", () => {
         ...base,
         split_method: "items",
         items: [
-          { name: "Fries", unit_price: "80", quantity: "1", participant_ids: ["cris", "me"] },
+          {
+            name: "Fries",
+            unit_price: "80",
+            quantity: "1",
+            participant_ids: ["cris", "me"],
+            split: "equal",
+            values: { me: "5" },
+          },
         ],
         charges: [
           { kind: "delivery", label: "", amount: "50", allocation: "equal", parts: {} },
@@ -71,10 +78,45 @@ describe("toExpensePayload", () => {
     expect(payload).not.toHaveProperty("subtotal");
     expect(payload).not.toHaveProperty("splits");
     expect(payload).toMatchObject({
-      items: [{ name: "Fries", unit_price: "80", quantity: "1", participant_ids: ["me", "cris"] }],
+      items: [
+        {
+          name: "Fries",
+          unit_price: "80",
+          quantity: "1",
+          participant_ids: ["me", "cris"],
+          split: "equal",
+          values: null,
+        },
+      ],
     });
     expect(payload.charges[0].splits).toEqual([]);
     expect(payload.charges[1].splits).toEqual([{ participant_id: "ben", value: null }]);
+  });
+
+  it("sends an item's shares only for the people who had it", () => {
+    const payload = toExpensePayload(
+      {
+        ...base,
+        split_method: "items",
+        items: [
+          {
+            name: "Half bucket",
+            unit_price: "799",
+            quantity: "1",
+            participant_ids: ["cris", "me"],
+            split: "shares",
+            values: { me: "3", cris: "", ben: "2" },
+          },
+        ],
+      },
+      order
+    );
+
+    expect(payload).toMatchObject({
+      items: [
+        { participant_ids: ["me", "cris"], split: "shares", values: { me: "3", cris: null } },
+      ],
+    });
   });
 
   it("sends only the people who paid something when several paid", () => {
