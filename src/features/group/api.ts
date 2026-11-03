@@ -38,12 +38,21 @@ export const toExpensePayload = (values: ExpenseFormValues, order: string[], tot
     split_method: values.split_method,
     ...(items
       ? {
-          items: values.items.map((item) => ({
-            name: item.name.trim(),
-            unit_price: item.unit_price || "0",
-            quantity: item.quantity,
-            participant_ids: order.filter((id) => item.participant_ids.includes(id)),
-          })),
+          items: values.items.map((item) => {
+            const ids = order.filter((id) => item.participant_ids.includes(id));
+            return {
+              name: item.name.trim(),
+              unit_price: item.unit_price || "0",
+              quantity: item.quantity,
+              participant_ids: ids,
+              split: item.split,
+              // Only the people who had it; anyone unticked keeps their typed value in the form only.
+              values:
+                item.split === "equal"
+                  ? null
+                  : Object.fromEntries(ids.map((id) => [id, item.values[id] || null])),
+            };
+          }),
         }
       : {
           subtotal: values.subtotal,
