@@ -819,7 +819,7 @@ function PartsEditor({
                 method === "amount" ? (
                   <CurrencyInput
                     aria-label={`${p.name}'s amount`}
-                    className="w-32"
+                    className="w-37 shrink-0"
                     value={field.value ?? ""}
                     onChange={(v) => field.onChange(v)}
                     placeholder="0.00"
@@ -1014,7 +1014,7 @@ function ItemRow({
                   split === "amount" ? (
                     <CurrencyInput
                       aria-label={`${p.name}'s amount for item ${index + 1}`}
-                      className="w-32"
+                      className="w-37 shrink-0"
                       value={field.value ?? ""}
                       onChange={(v) => field.onChange(v)}
                       placeholder="0.00"
