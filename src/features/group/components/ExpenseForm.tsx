@@ -971,33 +971,35 @@ function ItemRow({
           </div>
         )}
       />
-      <Controller
-        name={`items.${index}.split`}
-        control={control}
-        render={({ field }) => (
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-muted-foreground text-xs">Split:</span>
-            <div
-              role="group"
-              aria-label={`How item ${index + 1} is split`}
-              className={cn(segmentListClass, "h-auto flex-wrap sm:h-auto")}
-            >
-              {ITEM_SPLITS.map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  aria-pressed={field.value === s}
-                  onClick={() => field.onChange(s)}
-                  className={cn(segmentClass, "h-8 px-2 text-xs")}
-                >
-                  {ITEM_SPLIT_LABELS[s]}
-                </button>
-              ))}
+      {chosen.length >= 2 && (
+        <Controller
+          name={`items.${index}.split`}
+          control={control}
+          render={({ field }) => (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-muted-foreground text-xs">Split:</span>
+              <div
+                role="group"
+                aria-label={`How item ${index + 1} is split`}
+                className={cn(segmentListClass, "h-auto flex-wrap sm:h-auto")}
+              >
+                {ITEM_SPLITS.map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    aria-pressed={field.value === s}
+                    onClick={() => field.onChange(s)}
+                    className={cn(segmentClass, "h-8 px-2 text-xs")}
+                  >
+                    {ITEM_SPLIT_LABELS[s]}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
-      />
-      {split !== "equal" && chosen.length > 0 && (
+          )}
+        />
+      )}
+      {split !== "equal" && chosen.length >= 2 && (
         <ul className="divide-border divide-y divide-dashed">
           {chosen.map((p) => (
             <li key={p.id} className="flex items-center gap-3 py-1.5">

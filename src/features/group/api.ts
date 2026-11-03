@@ -40,15 +40,17 @@ export const toExpensePayload = (values: ExpenseFormValues, order: string[], tot
       ? {
           items: values.items.map((item) => {
             const ids = order.filter((id) => item.participant_ids.includes(id));
+            // The split choice is hidden until two people had it; one person takes the whole item.
+            const split = ids.length < 2 ? "equal" : item.split;
             return {
               name: item.name.trim(),
               unit_price: item.unit_price || "0",
               quantity: item.quantity,
               participant_ids: ids,
-              split: item.split,
+              split,
               // Only the people who had it; anyone unticked keeps their typed value in the form only.
               values:
-                item.split === "equal"
+                split === "equal"
                   ? null
                   : Object.fromEntries(ids.map((id) => [id, item.values[id] || null])),
             };
