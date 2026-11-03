@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { format } from "date-fns";
 import { Controller, useFieldArray, useForm, useWatch, type Control } from "react-hook-form";
-import { Plus, Trash2 } from "lucide-react";
+import { ChevronDown, Plus, Trash2, Users } from "lucide-react";
 import { toast } from "sonner";
 import { useDebounce } from "use-debounce";
 
@@ -13,6 +14,7 @@ import { MoneyDisplay } from "@/components/shared/money-display";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Field,
   FieldDescription,
@@ -34,7 +36,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useUserSettings } from "@/features/auth/hooks/useUserSettings";
-import { todayIn } from "@/lib/utils/date";
+import { relativeDayLabel, todayIn } from "@/lib/utils/date";
 import { cn } from "@/lib/utils/component";
 import { ApiValidationError } from "@/lib/utils/request";
 import { generateUuid } from "@/lib/utils/string";
@@ -97,6 +99,9 @@ const toNumberInput = (v: string) =>
     .replace(/[^0-9.]/g, "")
     .replace(/(\..*)\./g, "$1")
     .match(/^\d*\.?\d{0,4}/) ?? [""])[0];
+
+/** A tappable person chip (payer, "who had it"): pressed gets the cursor-yellow highlight. */
+const personChipClass = cn(segmentClass, "pixel-box bg-card h-11 gap-1.5 px-3");
 
 const blankItem = (): ExpenseFormValues["items"][number] => ({
   name: "",
@@ -219,6 +224,7 @@ function ExpenseFormBody({
   const [idempotencyKey] = useState(generateUuid);
   const [submitting, setSubmitting] = useState(false);
   const [serverErrors, setServerErrors] = useState<string[]>([]);
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   // Everyone active, plus archived people already in this expense (so editing keeps them).
   const people = useMemo(() => {
@@ -269,6 +275,7 @@ function ExpenseFormBody({
     }
     if (formValues.record_share && !formValues.category_id) {
       form.setError("category_id", { message: "Choose a spending category for your share." });
+      setDetailsOpen(true);
       return;
     }
 
@@ -296,6 +303,9 @@ function ExpenseFormBody({
         for (const [field, messages] of Object.entries(error.errors)) {
           if ((simple as readonly string[]).includes(field)) {
             form.setError(field as (typeof simple)[number], { message: messages[0] });
+            if (field === "expense_date" || field === "category_id" || field === "notes") {
+              setDetailsOpen(true);
+            }
           } else {
             rest.push(...messages);
           }
@@ -309,8 +319,24 @@ function ExpenseFormBody({
     }
   };
 
+  const today = todayIn(timezone);
+  const dateLabel =
+    relativeDayLabel(values.expense_date, today) ??
+    (values.expense_date
+      ? format(new Date(`${values.expense_date}T00:00:00`), "MMM d, yyyy")
+      : "No date");
+  const categoryName = categories.data?.find((c) => c.id === values.category_id)?.name;
+  const detailsSummary = [dateLabel, categoryName ?? "No category", values.notes.trim() && "Note"]
+    .filter(Boolean)
+    .join(" · ");
+
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
+    <form
+      onSubmit={form.handleSubmit(onSubmit, (errors) => {
+        if (errors.expense_date || errors.category_id || errors.notes) setDetailsOpen(true);
+      })}
+      noValidate
+    >
       <FieldGroup>
         {expense && openSettlements > 0 && (
           <Alert>
@@ -323,62 +349,130 @@ function ExpenseFormBody({
           </Alert>
         )}
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        {/* The two things every expense needs, up front. */}
+        <div className="pixel-panel space-y-3 p-3">
           <Controller
             name="description"
             control={form.control}
             render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid} className="sm:col-span-2">
+              <Field data-invalid={fieldState.invalid}>
                 <FieldLabel htmlFor="expense-description">What was it?</FieldLabel>
                 <Input
                   {...field}
                   id="expense-description"
                   placeholder="Food order, hotel, groceries…"
                   maxLength={255}
+                  autoFocus={!expense}
+                  enterKeyHint="next"
                   aria-invalid={fieldState.invalid}
+                  className="h-11"
                 />
                 {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
               </Field>
             )}
           />
-          <Controller
-            name="expense_date"
-            control={form.control}
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor="expense-date">Date</FieldLabel>
-                <Input {...field} id="expense-date" type="date" aria-invalid={fieldState.invalid} />
-                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-              </Field>
-            )}
-          />
-          <Controller
-            name="category_id"
-            control={form.control}
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor="expense-category">Category (optional)</FieldLabel>
-                <Autocomplete
-                  id="expense-category"
-                  value={field.value}
-                  onChange={field.onChange}
-                  onBlur={field.onBlur}
-                  options={(categories.data ?? []).map((c) => ({
-                    value: c.id,
-                    label: c.name,
-                    color: c.color,
-                  }))}
-                  loading={categories.isLoading}
-                  placeholder="Food, Transport…"
-                  emptyMessage="No categories match."
-                  invalid={fieldState.invalid}
-                  clearable
-                />
-                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-              </Field>
-            )}
-          />
+          {method === "items" ? (
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="font-pixel text-sm">Amount</span>
+              <span className="text-muted-foreground text-sm">Adds up from the items below</span>
+            </div>
+          ) : (
+            <Controller
+              name="subtotal"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field
+                  data-invalid={fieldState.invalid}
+                  className="[&_[data-slot=input-group]]:h-14 [&_input]:font-stat [&_input]:text-3xl"
+                >
+                  <FieldLabel htmlFor="expense-subtotal">
+                    Amount {values.charges.length > 0 && "(before fees and discounts)"}
+                  </FieldLabel>
+                  <CurrencyInput
+                    id="expense-subtotal"
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    placeholder="0.00"
+                    aria-invalid={fieldState.invalid}
+                  />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+          )}
         </div>
+
+        {/* Who paid: one tap on a person, or several people with their amounts. */}
+        <FieldSet>
+          <FieldLegend className="font-pixel">Who paid?</FieldLegend>
+          <div role="group" aria-label="Who paid" className="flex flex-wrap gap-2">
+            {people.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                aria-pressed={values.payer_mode === "single" && values.payer_id === p.id}
+                onClick={() => {
+                  form.setValue("payer_mode", "single");
+                  form.setValue("payer_id", p.id);
+                  form.clearErrors("payer_id");
+                }}
+                className={personChipClass}
+              >
+                {p.name}
+                {p.is_me && <span className="opacity-70"> (me)</span>}
+              </button>
+            ))}
+            <button
+              type="button"
+              aria-pressed={values.payer_mode === "multiple"}
+              onClick={() => form.setValue("payer_mode", "multiple")}
+              className={personChipClass}
+            >
+              <Users aria-hidden className="size-4" />
+              Several people
+            </button>
+          </div>
+          {form.formState.errors.payer_id ? (
+            <FieldError errors={[form.formState.errors.payer_id]} />
+          ) : values.payer_mode === "single" ? (
+            preview.data && (
+              <FieldDescription>
+                Paid the whole <MoneyDisplay value={preview.data.total} tone="neutral" />.
+              </FieldDescription>
+            )
+          ) : (
+            <div className="space-y-2">
+              {people.map((p) => (
+                <Controller
+                  key={p.id}
+                  name={`payer_amounts.${p.id}`}
+                  control={form.control}
+                  render={({ field }) => (
+                    <div className="grid grid-cols-[minmax(0,1fr)_9rem] items-center gap-3">
+                      <label htmlFor={`payer-${p.id}`} className="truncate text-sm">
+                        {p.name}
+                        {p.is_me && <span className="text-muted-foreground"> (me)</span>}
+                      </label>
+                      <CurrencyInput
+                        id={`payer-${p.id}`}
+                        value={field.value ?? ""}
+                        onChange={field.onChange}
+                        placeholder="0.00"
+                      />
+                    </div>
+                  )}
+                />
+              ))}
+              {preview.data && (
+                <FieldDescription>
+                  The amounts paid must add up to the total,{" "}
+                  <MoneyDisplay value={preview.data.total} tone="neutral" />.
+                </FieldDescription>
+              )}
+            </div>
+          )}
+        </FieldSet>
 
         {/* How it's split */}
         <FieldSet>
@@ -390,7 +484,10 @@ function ExpenseFormBody({
               <div
                 role="group"
                 aria-label="Split method"
-                className={cn(segmentListClass, "h-auto w-full flex-wrap sm:h-auto")}
+                className={cn(
+                  segmentListClass,
+                  "grid h-auto w-full grid-cols-3 sm:h-auto sm:grid-cols-6"
+                )}
               >
                 {SPLIT_METHODS.map((m) => (
                   <button
@@ -398,9 +495,9 @@ function ExpenseFormBody({
                     type="button"
                     aria-pressed={field.value === m}
                     onClick={() => field.onChange(m)}
-                    className={cn(segmentClass, "h-9 flex-1")}
+                    className={cn(segmentClass, "h-10 px-1")}
                   >
-                    {SPLIT_LABELS[m]}
+                    {SPLIT_LABELS[m].replace(/^By /, "")}
                   </button>
                 ))}
               </div>
@@ -431,35 +528,16 @@ function ExpenseFormBody({
               </Button>
             </div>
           ) : (
-            <>
-              <Controller
-                name="subtotal"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="expense-subtotal">
-                      Amount {values.charges.length > 0 && "(before fees and discounts)"}
-                    </FieldLabel>
-                    <CurrencyInput
-                      id="expense-subtotal"
-                      value={field.value}
-                      onChange={field.onChange}
-                      onBlur={field.onBlur}
-                      placeholder="0.00"
-                      aria-invalid={fieldState.invalid}
-                    />
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                  </Field>
-                )}
-              />
-              <PartsEditor
-                control={form.control}
-                prefix="parts"
-                people={people}
-                method={method}
-                resultOf={(id) => allocationOf(id)?.base}
-              />
-            </>
+            <PartsEditor
+              control={form.control}
+              prefix="parts"
+              people={people}
+              method={method}
+              resultOf={(id) => allocationOf(id)?.base}
+              onSetAll={(included) =>
+                people.forEach((p) => form.setValue(`parts.${p.id}.included`, included))
+              }
+            />
           )}
         </FieldSet>
 
@@ -516,99 +594,6 @@ function ExpenseFormBody({
               Add a discount
             </Button>
           </div>
-        </FieldSet>
-
-        {/* Who paid */}
-        <FieldSet>
-          <FieldLegend className="font-pixel">Who paid?</FieldLegend>
-          <Controller
-            name="payer_mode"
-            control={form.control}
-            render={({ field }) => (
-              <div role="group" aria-label="Who paid" className={segmentListClass}>
-                <button
-                  type="button"
-                  aria-pressed={field.value === "single"}
-                  className={segmentClass}
-                  onClick={() => field.onChange("single")}
-                >
-                  One person
-                </button>
-                <button
-                  type="button"
-                  aria-pressed={field.value === "multiple"}
-                  className={segmentClass}
-                  onClick={() => field.onChange("multiple")}
-                >
-                  Several people
-                </button>
-              </div>
-            )}
-          />
-          {values.payer_mode === "single" ? (
-            <Controller
-              name="payer_id"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="expense-payer">Paid by</FieldLabel>
-                  <Autocomplete
-                    id="expense-payer"
-                    value={field.value}
-                    onChange={field.onChange}
-                    onBlur={field.onBlur}
-                    options={people.map((p) => ({
-                      value: p.id,
-                      label: p.is_me ? `${p.name} (me)` : p.name,
-                    }))}
-                    placeholder="Choose who paid"
-                    emptyMessage="Nobody matches."
-                    invalid={fieldState.invalid}
-                    required
-                  />
-                  {fieldState.invalid ? (
-                    <FieldError errors={[fieldState.error]} />
-                  ) : (
-                    preview.data && (
-                      <FieldDescription>
-                        Paid the whole <MoneyDisplay value={preview.data.total} tone="neutral" />.
-                      </FieldDescription>
-                    )
-                  )}
-                </Field>
-              )}
-            />
-          ) : (
-            <div className="space-y-2">
-              {people.map((p) => (
-                <Controller
-                  key={p.id}
-                  name={`payer_amounts.${p.id}`}
-                  control={form.control}
-                  render={({ field }) => (
-                    <div className="grid grid-cols-[minmax(0,1fr)_10rem] items-center gap-3">
-                      <label htmlFor={`payer-${p.id}`} className="truncate text-sm">
-                        {p.name}
-                        {p.is_me && <span className="text-muted-foreground"> (me)</span>}
-                      </label>
-                      <CurrencyInput
-                        id={`payer-${p.id}`}
-                        value={field.value ?? ""}
-                        onChange={field.onChange}
-                        placeholder="0.00"
-                      />
-                    </div>
-                  )}
-                />
-              ))}
-              {preview.data && (
-                <FieldDescription>
-                  The amounts paid must add up to the total,{" "}
-                  <MoneyDisplay value={preview.data.total} tone="neutral" />.
-                </FieldDescription>
-              )}
-            </div>
-          )}
         </FieldSet>
 
         <Breakdown
@@ -676,16 +661,73 @@ function ExpenseFormBody({
           </FieldSet>
         )}
 
-        <Controller
-          name="notes"
-          control={form.control}
-          render={({ field }) => (
-            <Field>
-              <FieldLabel htmlFor="expense-notes">Notes (optional)</FieldLabel>
-              <Textarea {...field} id="expense-notes" rows={2} maxLength={2000} />
-            </Field>
-          )}
-        />
+        {/* Date, category and notes: sensible defaults, tucked away until someone needs them. */}
+        <Collapsible open={detailsOpen} onOpenChange={setDetailsOpen}>
+          <CollapsibleTrigger className="pixel-box bg-card hover:bg-accent focus-visible:outline-highlight group flex min-h-11 w-full items-center gap-2 px-3 text-left outline-none focus-visible:outline-3">
+            <span className="font-pixel text-sm">Details</span>
+            <span className="text-muted-foreground min-w-0 flex-1 truncate text-right text-sm">
+              {detailsSummary}
+            </span>
+            <ChevronDown
+              className="size-4 shrink-0 transition-transform group-data-[state=open]:rotate-180 motion-reduce:transition-none"
+              aria-hidden
+            />
+          </CollapsibleTrigger>
+          <CollapsibleContent className="grid gap-4 pt-3 sm:grid-cols-2">
+            <Controller
+              name="expense_date"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="expense-date">Date</FieldLabel>
+                  <Input
+                    {...field}
+                    id="expense-date"
+                    type="date"
+                    aria-invalid={fieldState.invalid}
+                  />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+            <Controller
+              name="category_id"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="expense-category">Category (optional)</FieldLabel>
+                  <Autocomplete
+                    id="expense-category"
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    options={(categories.data ?? []).map((c) => ({
+                      value: c.id,
+                      label: c.name,
+                      color: c.color,
+                    }))}
+                    loading={categories.isLoading}
+                    placeholder="Food, Transport…"
+                    emptyMessage="No categories match."
+                    invalid={fieldState.invalid}
+                    clearable
+                  />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+            <Controller
+              name="notes"
+              control={form.control}
+              render={({ field }) => (
+                <Field className="sm:col-span-2">
+                  <FieldLabel htmlFor="expense-notes">Notes (optional)</FieldLabel>
+                  <Textarea {...field} id="expense-notes" rows={2} maxLength={2000} />
+                </Field>
+              )}
+            />
+          </CollapsibleContent>
+        </Collapsible>
 
         {serverErrors.length > 0 && (
           <Alert variant="destructive">
@@ -698,11 +740,26 @@ function ExpenseFormBody({
             </AlertDescription>
           </Alert>
         )}
+      </FieldGroup>
 
-        <Button type="submit" disabled={submitting}>
+      {/* Pinned to the bottom of the dialog or sheet: the total and the button are always in reach. */}
+      <div className="bg-card border-outline sticky -bottom-[19px] z-10 -mx-[19px] -mb-[19px] mt-6 flex items-center gap-3 border-t-2 px-[19px] py-3 in-data-[slot=sheet-content]:-bottom-4 in-data-[slot=sheet-content]:-mx-4 in-data-[slot=sheet-content]:-mb-4 in-data-[slot=sheet-content]:px-4">
+        <div className="min-w-0 flex-1" aria-live="polite">
+          <div className="text-muted-foreground text-xs">
+            {preview.isFetching ? "Checking…" : "Total"}
+          </div>
+          <div className="font-stat truncate text-2xl leading-none">
+            {draft && preview.data ? (
+              <MoneyDisplay value={preview.data.total} tone="neutral" />
+            ) : (
+              <span className="text-muted-foreground">—</span>
+            )}
+          </div>
+        </div>
+        <Button type="submit" disabled={submitting} className="h-11 min-w-36">
           {submitting ? "Saving..." : expense ? "Save changes" : "Add expense"}
         </Button>
-      </FieldGroup>
+      </div>
     </form>
   );
 }
@@ -714,12 +771,15 @@ function PartsEditor({
   people,
   method,
   resultOf,
+  onSetAll,
 }: {
   control: Control<ExpenseFormValues>;
   prefix: "parts" | `charges.${number}.parts`;
   people: Participant[];
   method: SplitMethod | "assigned";
   resultOf?: (id: string) => Allocation["base"] | undefined;
+  /** Shows "Everyone" / "Nobody" shortcuts above the list. */
+  onSetAll?: (included: boolean) => void;
 }) {
   const withValue = method !== "equal" && method !== "assigned";
   const unit =
@@ -731,15 +791,15 @@ function PartsEditor({
           ? "qty"
           : "";
 
-  return (
+  const list = (
     <ul className="pixel-box divide-border divide-y-2 divide-dashed">
       {people.map((p) => (
-        <li key={p.id} className="flex flex-wrap items-center gap-3 px-3 py-2">
+        <li key={p.id} className="flex flex-wrap items-center gap-3 px-3 py-1">
           <Controller
             name={`${prefix}.${p.id}.included`}
             control={control}
             render={({ field }) => (
-              <label className="flex min-w-0 flex-1 items-center gap-2 text-sm">
+              <label className="flex min-h-11 min-w-0 flex-1 cursor-pointer items-center gap-2 text-sm">
                 <Checkbox
                   checked={!!field.value}
                   onCheckedChange={(checked) => field.onChange(checked === true)}
@@ -790,6 +850,23 @@ function PartsEditor({
         </li>
       ))}
     </ul>
+  );
+
+  if (!onSetAll) return list;
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-end gap-1">
+        <span className="text-muted-foreground mr-auto text-xs">Who&apos;s in?</span>
+        <Button type="button" variant="ghost" size="sm" onClick={() => onSetAll(true)}>
+          Everyone
+        </Button>
+        <Button type="button" variant="ghost" size="sm" onClick={() => onSetAll(false)}>
+          Nobody
+        </Button>
+      </div>
+      {list}
+    </div>
   );
 }
 
@@ -880,7 +957,7 @@ function ItemRow({
                       on ? field.value.filter((id) => id !== p.id) : [...field.value, p.id]
                     )
                   }
-                  className={cn(segmentClass, "pixel-box bg-card h-8 px-2 text-xs")}
+                  className={cn(personChipClass, "h-10 px-2.5")}
                 >
                   {p.name}
                 </button>
@@ -1093,7 +1170,7 @@ function Breakdown({
     >
       <div className="flex items-center justify-between gap-2">
         <h3 id="breakdown-title" className="font-pixel text-sm">
-          Breakdown
+          Who owes what
         </h3>
         {loading && <span className="text-muted-foreground text-xs">Checking…</span>}
       </div>
@@ -1108,50 +1185,48 @@ function Breakdown({
           ))}
         </ul>
       ) : allocations ? (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-muted-foreground text-left text-xs">
-                <th className="py-1 font-normal">Person</th>
-                <th className="py-1 text-right font-normal">Base</th>
-                <th className="py-1 text-right font-normal">Fees</th>
-                <th className="py-1 text-right font-normal">Discounts</th>
-                <th className="py-1 text-right font-normal">Owes</th>
-              </tr>
-            </thead>
-            <tbody className="tabular-nums">
-              {allocations.map((a) => (
-                <tr key={a.participant_id} className="border-border border-t border-dashed">
-                  <td className="py-1">{people.find((p) => p.id === a.participant_id)?.name}</td>
-                  <td className="py-1 text-right">
-                    <MoneyDisplay value={a.base} tone="neutral" />
-                  </td>
-                  <td className="py-1 text-right">
-                    <MoneyDisplay value={a.charges} tone="neutral" />
-                  </td>
-                  <td className="py-1 text-right">
-                    <MoneyDisplay value={a.discounts} tone="neutral" />
-                  </td>
-                  <td className="py-1 text-right font-medium">
-                    <MoneyDisplay value={a.total} tone="neutral" />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-            {total && (
-              <tfoot>
-                <tr className="border-outline border-t-2">
-                  <td className="font-pixel py-1" colSpan={4}>
-                    Total
-                  </td>
-                  <td className="py-1 text-right font-medium">
-                    <MoneyDisplay value={total} tone="neutral" />
-                  </td>
-                </tr>
-              </tfoot>
-            )}
-          </table>
-        </div>
+        // One line per person; fees and discounts only show for those who have any.
+        <ul className="divide-border divide-y divide-dashed text-sm tabular-nums">
+          {allocations.map((a) => {
+            const person = people.find((p) => p.id === a.participant_id);
+            const hasFees = /[1-9]/.test(a.charges.amount);
+            const hasDiscounts = /[1-9]/.test(a.discounts.amount);
+            return (
+              <li key={a.participant_id} className="flex items-center gap-3 py-1.5">
+                <div className="min-w-0 flex-1">
+                  <div className="truncate">
+                    {person?.name}
+                    {person?.is_me && <span className="text-muted-foreground"> (me)</span>}
+                  </div>
+                  {(hasFees || hasDiscounts) && (
+                    <div className="text-muted-foreground text-xs">
+                      <MoneyDisplay value={a.base} tone="neutral" />
+                      {hasFees && (
+                        <>
+                          {" + "}
+                          <MoneyDisplay value={a.charges} tone="neutral" /> fees
+                        </>
+                      )}
+                      {hasDiscounts && (
+                        <>
+                          {" − "}
+                          <MoneyDisplay value={a.discounts} tone="neutral" /> off
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <MoneyDisplay value={a.total} tone="neutral" className="font-medium" />
+              </li>
+            );
+          })}
+          {total && (
+            <li className="border-outline flex items-center justify-between border-t-2 pt-1.5">
+              <span className="font-pixel">Total</span>
+              <MoneyDisplay value={total} tone="neutral" className="font-medium" />
+            </li>
+          )}
+        </ul>
       ) : null}
     </section>
   );
