@@ -41,8 +41,9 @@ export const debts: GuideTopic = {
           type: "steps",
           items: [
             'On Debts, click "Add debt" and choose "Money owed to me" or "Money I owe" (this can\'t be changed later).',
-            "Pick the person, or type a new name to add them to your people list.",
-            "Enter the amount, what it's for and the date. Add a due date and reference if you have them.",
+            'Tap the person (or search for them, if you have many), or "Someone new" to type a name and add them to your people list.',
+            'Enter the amount and what it\'s for. The date is today; tap Yesterday or pick another date. A due date, reference and notes are under "More options".',
+            'The bar at the bottom sums it up, such as "Juan owes you ₱500", so you can check the direction before saving.',
             'If money actually left or entered one of your accounts, tick "The money left one of my accounts" (or "came into"). Poofsy records a balance-only adjustment: the account moves, but it isn\'t spending or income.',
             "Save.",
           ],
