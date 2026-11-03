@@ -89,7 +89,7 @@ export const groups: GuideTopic = {
             },
             {
               term: "By items",
-              text: "List each item with its price and quantity, and tick who had it. An item ticked for several people is split equally between them.",
+              text: "List each item with its price and quantity, and tick who had it. An item ticked for several people is split equally between them, unless you switch that item to By shares (like 3 pieces of chicken against 2) or By amount (what each person's part cost, adding up to the item's price). Each item can use its own split.",
             },
           ],
         },
